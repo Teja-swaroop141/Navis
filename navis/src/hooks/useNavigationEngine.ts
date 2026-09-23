@@ -65,13 +65,21 @@ export function useNavigationEngine() {
     }
   }, [state.mode, dispatch]);
 
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
   const startNavigation = useCallback(async (mode: 'LIVE' | 'DEMO') => {
-    dispatch({ type: 'START_NAVIGATION', mode });
+    if (mode === 'DEMO') return;
+    dispatch({ type: 'START_NAVIGATION', mode: 'LIVE' });
     sensorFusionEngine.resetProgress();
 
     // Start sensors
     await sensorManager.start(handleIMUUpdate);
     await gnssManager.start(handleGNSSUpdate);
+
+    if (drUpdateInterval.current) clearInterval(drUpdateInterval.current);
 
     // Start DR state update interval
     drUpdateInterval.current = setInterval(() => {
@@ -79,7 +87,7 @@ export function useNavigationEngine() {
         const drState = deadReckoningEngine.getState();
         dispatch({ type: 'UPDATE_DR', state: drState });
 
-        if (state.mode === 'DEAD_RECKONING') {
+        if (stateRef.current.mode === 'DEAD_RECKONING') {
           const point: TrajectoryPoint = {
             position: drState.position,
             type: 'DR',

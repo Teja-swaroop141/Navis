@@ -23,7 +23,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { MetricCard } from '../components/MetricCard';
 import { StatusIndicator } from '../components/StatusIndicator';
 import { GlassCard } from '../components/GlassCard';
-import { OSMMapView } from '../components/OSMMapView';
+import { LeafletMapView } from '../components/LeafletMapView';
 import { DEMO_ROUTE } from '../constants/demoRoute';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -218,7 +218,6 @@ export function NavigationScreen({ navigation, route }: Props) {
     // Auto-start
     const init = async () => {
       if (appMode === 'DEMO') {
-        await engine.startNavigation('DEMO');
         demo.start();
       } else {
         await engine.startNavigation('LIVE');
@@ -228,8 +227,11 @@ export function NavigationScreen({ navigation, route }: Props) {
     init();
 
     return () => {
-      demo.pause();
-      engine.stopNavigation();
+      if (appMode === 'DEMO') {
+        demo.pause();
+      } else {
+        engine.stopNavigation();
+      }
     };
   }, []);
 
@@ -284,7 +286,7 @@ export function NavigationScreen({ navigation, route }: Props) {
 
       {/* Map */}
       <View style={styles.mapContainer}>
-        <OSMMapView
+        <LeafletMapView
           initialCenter={startPos}
           currentPosition={state.currentPosition}
           gnssTrajectory={gnssTrajectory}
