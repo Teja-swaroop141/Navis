@@ -101,6 +101,14 @@ export function SimulationScreen({ navigation }: Props) {
     simulationEngine.restart();
   };
 
+  const handleForkPause = () => {
+    simulationEngine.pause();
+  };
+
+  const handleForkResume = () => {
+    simulationEngine.resume();
+  };
+
   const handleSpeedSelect = (spd: SpeedMultiplier) => {
     simulationEngine.setSpeedMultiplier(spd);
   };
@@ -144,6 +152,8 @@ export function SimulationScreen({ navigation }: Props) {
           frame={frame}
           isPresentationMode={isPresentationMode}
           style={StyleSheet.absoluteFill}
+          onForkDecisionPause={handleForkPause}
+          onForkDecisionResume={handleForkResume}
         />
 
         {/* Legend Overlay */}

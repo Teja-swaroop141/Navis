@@ -1,24 +1,18 @@
 /**
  * SimulationMapView.tsx
  *
- * High-performance OpenStreetMap component powered by Leaflet in WebView.
+ * Immersive 3D Driving Simulation Environment (Three.js WebGL).
  *
- * Specific simulation capabilities:
- * - Official OpenStreetMap tile layer: https://tile.openstreetmap.org/{z}/{x}/{y}.png
- * - Display: "© OpenStreetMap contributors"
- * - Road route background with explicit tunnel sector
- * - Visible Tunnel Entrance and Tunnel Exit portals with arches & distance markers
- * - Translucent tunnel canopy / tube corridor overlay
- * - Real-time vehicle marker with heading rotation and navigation mode pulse
- * - Three distinct trajectory polylines:
- *     1. GNSS Path (Indigo solid) - stops at tunnel entrance
- *     2. Dead Reckoning Path (Amber dashed) - traverses tunnel
- *     3. Fused Path (Emerald green solid) - resumes after tunnel exit
- * - Dynamic camera:
- *     - Smooth car follow
- *     - Zooms out when approaching tunnel to display entrance and road ahead
- *     - Fits complete route bounds when simulation finishes
- * - In-tunnel ambient dark effect
+ * Key Capabilities:
+ * - Google Maps 3D Driving Perspective (dynamic forward chase view with depth & parallax)
+ * - Highly visible, unmistakable multi-road tunnel fork (distinct Left Bypass vs Right Main Expressway branches)
+ * - Interactive Decision Dialog Box at the tunnel junction:
+ *     - Vehicle stops completely at the fork
+ *     - Interactive dialog explains the decision and sensor heuristics (Gyroscope yaw, Accelerometer speed, Magnetometer azimuth)
+ *     - Clicking [ PROCEED / NEXT ▶ ] resumes vehicle driving through the selected right tunnel tube
+ * - Dramatic, clear right turn with curved asphalt roadbed, curved tunnel ribs, glowing green chevron signs, and steering wheels
+ * - Prominent Entrance & Exit portals with flashing hazard beacons
+ * - 100% flicker-free 60 FPS animation with pre-allocated geometries
  */
 
 import React, { useRef, useCallback, useEffect, useMemo } from 'react';
@@ -33,489 +27,1282 @@ interface SimulationMapViewProps {
   isPresentationMode?: boolean;
   style?: object;
   onMapReady?: () => void;
+  onForkDecisionPause?: () => void;
+  onForkDecisionResume?: () => void;
 }
 
 function buildSimulationHtml(center: LatLng): string {
-  const routeNodes = SIMULATION_ROUTE.waypoints.map(w => [w.position.latitude, w.position.longitude]);
-  const tunnelNodes = SIMULATION_ROUTE.tunnelRoute.map(n => [n.latitude, n.longitude]);
-  const entrance = SIMULATION_ROUTE.tunnelEntrance;
-  const exit = SIMULATION_ROUTE.tunnelExit;
-  const start = SIMULATION_ROUTE.start;
-  const dest = SIMULATION_ROUTE.destination;
-
   return `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <title>3D GNSS Dead Reckoning Simulation</title>
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; background: #0b0f19; overflow: hidden; }
-
-    /* ── 3D Viewport Scene ─────────────────────────────────────────────── */
-    #viewport3d {
+    html, body {
       width: 100%;
       height: 100%;
-      perspective: 850px;
-      perspective-origin: 50% 55%;
-      position: relative;
+      background: #050811;
       overflow: hidden;
-      background: radial-gradient(circle at 50% 20%, #1e1e38 0%, #0b0f19 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
-
-    #map-stage {
-      width: 100%;
-      height: 120%;
-      position: absolute;
-      top: -10%;
-      transform-origin: 50% 65%;
-      transform: rotateX(20deg);
-      transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-      will-change: transform;
-    }
-
-    #map-stage.approach-tilt {
-      transform: rotateX(26deg) scale(1.02);
-    }
-    #map-stage.tunnel-tilt {
-      transform: rotateX(32deg) scale(1.04);
-    }
-
-    #map {
+    #canvas-container {
       width: 100%;
       height: 100%;
-      background: #0b0f19;
-    }
-
-    /* ── 3D Overhead Grid & Atmosphere ────────────────────────────────── */
-    .grid-horizon {
       position: absolute;
-      top: 0; left: 0; right: 0; height: 35%;
-      background: linear-gradient(180deg, rgba(11,15,25,0.95) 0%, rgba(11,15,25,0.0) 100%);
-      pointer-events: none;
-      z-index: 550;
+      top: 0;
+      left: 0;
     }
 
-    /* ── 3D Portal & Marker Badges ───────────────────────────────────── */
-    .portal-marker { background: transparent; border: none; }
-    .portal-wrap {
-      display: flex; flex-direction: column; align-items: center;
-      pointer-events: none;
-      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.7));
-    }
-    .portal-arch {
-      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-      color: #fde68a;
-      padding: 5px 12px;
-      border-radius: 9px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: 0.8px;
-      border: 2px solid #f59e0b;
-      box-shadow: 0 0 16px rgba(245,158,11,0.5), inset 0 1px 2px rgba(255,255,255,0.3);
-      white-space: nowrap;
-      display: flex; align-items: center; gap: 6px;
-      text-transform: uppercase;
-    }
-    .portal-exit-arch {
-      background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
-      border-color: #10b981;
-      color: #a7f3d0;
-      box-shadow: 0 0 16px rgba(16,185,129,0.5), inset 0 1px 2px rgba(255,255,255,0.3);
-    }
-    .portal-pin {
-      width: 0; height: 0;
-      border-left: 7px solid transparent;
-      border-right: 7px solid transparent;
-      border-top: 9px solid #f59e0b;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-    }
-    .portal-exit-pin { border-top-color: #10b981; }
-
-    .flag-wrap {
-      background: linear-gradient(135deg, #1e293b, #0f172a);
-      color: #f8fafc;
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      border: 1.5px solid rgba(255,255,255,0.4);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-      white-space: nowrap;
-    }
-
-    /* ── Realistic 3D Car Marker ──────────────────────────────────────── */
-    .car-marker-container { background: transparent; border: none; }
-    .car-3d-wrapper {
-      position: relative;
-      width: 72px;
-      height: 72px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Dynamic Headlight Light Beams Cone */
-    .headlight-beams {
-      position: absolute;
-      width: 90px;
-      height: 120px;
-      top: -85px;
-      left: calc(50% - 45px);
-      background: linear-gradient(180deg, rgba(254, 240, 138, 0.35) 0%, rgba(254, 240, 138, 0.08) 55%, transparent 100%);
-      clip-path: polygon(36% 100%, 64% 100%, 100% 0%, 0% 0%);
-      pointer-events: none;
-      filter: blur(2px);
-      z-index: 10;
-    }
-
-    /* Radial Ground Shadow */
-    .car-ground-shadow {
-      position: absolute;
-      width: 38px;
-      height: 22px;
-      background: radial-gradient(ellipse, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.0) 75%);
-      border-radius: 50%;
-      top: 32px;
-      z-index: 1;
-    }
-
-    /* Radar / Positioning Ping Ring */
-    .car-radar-ring {
-      position: absolute;
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      opacity: 0;
-      animation: sonarPulse 2s ease-out infinite;
-      pointer-events: none;
-      z-index: 2;
-    }
-    @keyframes sonarPulse {
-      0%   { transform: scale(0.4); opacity: 0.8; }
-      50%  { opacity: 0.3; }
-      100% { transform: scale(2.0); opacity: 0; }
-    }
-
-    /* Car Rotator Container */
-    .car-rotator {
-      position: relative;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 5;
-      transition: transform 0.12s linear;
-    }
-
-    /* Mode Pill Badge */
-    .mode-pill {
-      position: absolute;
-      bottom: -4px;
-      padding: 2px 7px;
-      border-radius: 6px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 8px;
-      font-weight: 900;
-      color: #ffffff;
-      letter-spacing: 0.6px;
-      border: 1.5px solid rgba(255,255,255,0.7);
-      box-shadow: 0 3px 8px rgba(0,0,0,0.45);
-      white-space: nowrap;
-      z-index: 20;
-      text-transform: uppercase;
-      transition: background-color 0.3s ease;
-    }
-
-    /* ── In-Tunnel 3D Dark Environment & Interior Road Beacons ──────── */
-    #tunnel-atmosphere {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(circle at 50% 60%, rgba(15, 12, 35, 0.4) 0%, rgba(5, 3, 15, 0.85) 100%);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.8s ease-in-out;
-      z-index: 450;
-    }
-    #tunnel-atmosphere.active { opacity: 1; }
-
-    /* Overhead 3D HUD telemetry banner */
-    #hud-telemetry {
+    /* ── High-Tech Floating 3D HUD ─────────────────────────────────────── */
+    #hud-overlay {
       position: absolute;
       top: 10px;
       left: 10px;
-      background: rgba(15, 23, 42, 0.88);
-      border: 1px solid rgba(99, 102, 241, 0.5);
-      box-shadow: 0 4px 14px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.1);
-      border-radius: 8px;
-      padding: 6px 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .hud-card {
+      background: rgba(11, 15, 25, 0.92);
+      border: 1px solid rgba(99, 102, 241, 0.45);
+      border-radius: 10px;
+      padding: 7px 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.1);
+      backdrop-filter: blur(8px);
       display: flex;
       gap: 12px;
-      z-index: 600;
-      pointer-events: none;
-      backdrop-filter: blur(6px);
+      align-items: center;
     }
-    .hud-stat { display: flex; flex-direction: column; }
-    .hud-stat-title { font-size: 7px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-    .hud-stat-val { font-size: 11px; font-weight: 900; color: #38bdf8; font-family: monospace; }
+
+    .hud-stat { display: flex; flex-direction: column; gap: 1px; }
+    .hud-label { font-size: 7.5px; font-weight: 800; color: #94a3b8; letter-spacing: 0.8px; text-transform: uppercase; }
+    .hud-val { font-size: 12px; font-weight: 900; color: #38bdf8; font-family: 'Courier New', monospace; }
+
+    .hud-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .camera-btn {
+      background: rgba(15, 23, 42, 0.90);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #f8fafc;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .camera-btn:hover { background: #4f46e5; border-color: #818cf8; }
+
+    .state-badge {
+      background: #4f46e5;
+      color: #ffffff;
+      font-size: 8.5px;
+      font-weight: 900;
+      padding: 4px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      box-shadow: 0 0 12px rgba(79, 70, 229, 0.5);
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    /* ── Interactive Tunnel Decision Dialog Modal ──────────────────────── */
+    #decision-dialog-backdrop {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(5, 8, 17, 0.76);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+    }
+
+    .decision-dialog {
+      background: rgba(15, 23, 42, 0.97);
+      border: 2px solid #f59e0b;
+      border-radius: 16px;
+      padding: 16px 20px;
+      width: 92%;
+      max-width: 440px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.85), 0 0 32px rgba(245, 158, 11, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: dialogPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes dialogPop {
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1.0); }
+    }
+
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+      padding-bottom: 8px;
+    }
+    .dialog-badge {
+      background: #f59e0b;
+      color: #0f172a;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.6px;
+    }
+    .dialog-title {
+      color: #fde68a;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+
+    .decision-row {
+      display: flex;
+      gap: 8px;
+      background: rgba(30, 41, 59, 0.7);
+      padding: 10px 12px;
+      border-radius: 8px;
+      border-left: 4px solid #10b981;
+    }
+    .decision-text { color: #f8fafc; font-size: 11px; line-height: 16px; }
+    .decision-highlight { color: #34d399; font-weight: 800; }
+
+    .heuristics-box {
+      background: rgba(11, 15, 25, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 9px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .heuristics-title { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px; }
+    .heuristic-item { display: flex; gap: 6px; font-size: 9.5px; color: #cbd5e1; line-height: 14px; }
+    .heuristic-bullet { color: #f59e0b; font-weight: bold; }
+
+    .next-btn {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border: 1.5px solid #6ee7b7;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 12px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.5);
+      transition: all 0.2s ease;
+      letter-spacing: 0.8px;
+      animation: pulseBtn 1.8s infinite;
+    }
+    .next-btn:hover { background: #34d399; transform: translateY(-1px); }
+    @keyframes pulseBtn {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
   </style>
 </head>
 <body>
-  <div id="viewport3d">
-    <div id="map-stage">
-      <div id="map"></div>
-      <div id="tunnel-atmosphere"></div>
-    </div>
-    <div class="grid-horizon"></div>
+  <div id="canvas-container"></div>
 
-    <!-- Real-time HUD Telemetry -->
-    <div id="hud-telemetry">
+  <!-- HUD Telemetry Overlay -->
+  <div id="hud-overlay">
+    <div class="hud-card">
       <div class="hud-stat">
-        <span class="hud-stat-title">GNSS SATS</span>
-        <span class="hud-stat-val" id="hud-sats">14 🛰️</span>
+        <span class="hud-label">GNSS SATS</span>
+        <span class="hud-val" id="hud-sats">14 🛰️</span>
       </div>
       <div class="hud-stat">
-        <span class="hud-stat-title">DR DISPL</span>
-        <span class="hud-stat-val" id="hud-drift">0.0 m</span>
+        <span class="hud-label">DR DRIFT</span>
+        <span class="hud-val" id="hud-drift" style="color: #f59e0b;">0.0 m</span>
       </div>
       <div class="hud-stat">
-        <span class="hud-stat-title">IMU FUSION</span>
-        <span class="hud-stat-val" id="hud-mode" style="color: #4ade80;">ACTIVE</span>
+        <span class="hud-label">SPEED</span>
+        <span class="hud-val" id="hud-speed">48 km/h</span>
       </div>
+      <div class="hud-stat">
+        <span class="hud-label">PROGRESS</span>
+        <span class="hud-val" id="hud-progress">0%</span>
+      </div>
+    </div>
+
+    <div class="hud-right">
+      <div class="state-badge" id="hud-state">GNSS ACTIVE</div>
+      <button class="camera-btn" id="cam-toggle" onclick="toggleCameraView()">🚘 3D DRIVE CAM</button>
+    </div>
+  </div>
+
+  <!-- Interactive Tunnel Fork Decision Dialog Modal -->
+  <div id="decision-dialog-backdrop">
+    <div class="decision-dialog">
+      <div class="dialog-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 18px;">🔀</span>
+          <span class="dialog-title">TUNNEL FORK SENSOR DECISION</span>
+        </div>
+        <span class="dialog-badge">GNSS: 0 SATS</span>
+      </div>
+
+      <div class="decision-row">
+        <div class="decision-text">
+          <div style="margin-bottom: 4px;">
+            <span class="decision-highlight">DECISION:</span> Stay on <span class="decision-highlight">RIGHT MAIN TUBE (NH 275)</span>
+          </div>
+          <div style="color: #f87171; font-size: 10px;">
+            REJECTED: Left Exit 4B Bypass (Off-route dead end)
+          </div>
+        </div>
+      </div>
+
+      <div class="heuristics-box">
+        <span class="heuristics-title">WHY WAS THIS DECISION MADE? (SENSOR FUSION)</span>
+        <div class="heuristic-item">
+          <span class="heuristic-bullet">1.</span>
+          <span><b>Gyroscope (ω_z = +0.038 rad/s):</b> Yaw rate detects rightward curvature entering the planned expressway tube.</span>
+        </div>
+        <div class="heuristic-item">
+          <span class="heuristic-bullet">2.</span>
+          <span><b>Accelerometer (Speed 48 km/h):</b> Continuous cruising speed profile, confirming no off-ramp deceleration.</span>
+        </div>
+        <div class="heuristic-item">
+          <span class="heuristic-bullet">3.</span>
+          <span><b>Magnetometer (Heading 274° → 288°):</b> Azimuth tracks the planned expressway bearing.</span>
+        </div>
+      </div>
+
+      <button class="next-btn" onclick="dismissDecisionDialog()">
+        <span>PROCEED / NEXT</span>
+        <span style="font-size: 15px;">▶</span>
+      </button>
     </div>
   </div>
 
   <script>
-    var mapStage = document.getElementById('map-stage');
-    var tunnelAtmosphere = document.getElementById('tunnel-atmosphere');
-    var hudSats = document.getElementById('hud-sats');
-    var hudDrift = document.getElementById('hud-drift');
-    var hudMode = document.getElementById('hud-mode');
+    // ─── 1. THREE.JS SCENE SETUP ──────────────────────────────────────────────
+    var container = document.getElementById('canvas-container');
+    var width = window.innerWidth;
+    var height = window.innerHeight;
 
-    var map = L.map('map', {
-      zoomControl: false,
-      attributionControl: true,
-      preferCanvas: true
-    }).setView([${center.latitude}, ${center.longitude}], 17);
+    var scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x060913);
+    scene.fog = new THREE.FogExp2(0x060913, 0.002);
 
-    // Dark sleek OpenStreetMap tiles
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors',
-      opacity: 0.95
-    }).addTo(map);
+    // Google Navigation Perspective Camera (Forward Looking with Depth & Parallax)
+    var camera = new THREE.PerspectiveCamera(56, width / height, 0.5, 1500);
+    var renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+    container.appendChild(renderer.domElement);
 
-    // ── 1. Full Road Geometry ──────────────────────────────────────────
-    var plannedRouteNodes = ${JSON.stringify(routeNodes)};
-    
-    // Road border/shadow for 3D depth
-    L.polyline(plannedRouteNodes, {
-      color: '#020617', weight: 16, opacity: 0.45,
-      lineCap: 'round', lineJoin: 'round'
-    }).addTo(map);
-    
-    // Main asphalt road
-    var plannedRouteLine = L.polyline(plannedRouteNodes, {
-      color: '#334155', weight: 11, opacity: 0.9,
-      lineCap: 'round', lineJoin: 'round'
-    }).addTo(map);
-    
-    // Center divider dash
-    L.polyline(plannedRouteNodes, {
-      color: '#cbd5e1', weight: 2.2, opacity: 0.7,
-      dashArray: '10, 8'
-    }).addTo(map);
+    // ─── 2. LIGHTING ─────────────────────────────────────────────────────────
+    var ambientLight = new THREE.AmbientLight(0xdbeafe, 0.85);
+    scene.add(ambientLight);
 
-    // ── 2. 3D Tunnel Tube Infrastructure ─────────────────────────────
-    var tunnelNodes = ${JSON.stringify(tunnelNodes)};
-    
-    // Tunnel concrete casing
-    L.polyline(tunnelNodes, {
-      color: '#090514', weight: 22, opacity: 0.8, lineCap: 'square'
-    }).addTo(map);
-    
-    // Interior tunnel roadway
-    L.polyline(tunnelNodes, {
-      color: '#1e1b4b', weight: 14, opacity: 0.95, lineCap: 'square'
-    }).addTo(map);
-    
-    // Amber tunnel centerline
-    L.polyline(tunnelNodes, {
-      color: '#f59e0b', weight: 2.5, opacity: 0.9, dashArray: '6, 6'
-    }).addTo(map);
+    var sunLight = new THREE.DirectionalLight(0xfff7ed, 1.4);
+    sunLight.position.set(50, 180, 80);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+    scene.add(sunLight);
 
-    // ── 3. Start, Tunnel Entrance, Exit & Destination Markers ─────────
-    var entranceIcon = L.divIcon({
-      className: 'portal-marker',
-      html: '<div class="portal-wrap">' +
-            '<div class="portal-arch">⚠️ TUNNEL ENTRANCE · 320m</div>' +
-            '<div class="portal-pin"></div></div>',
-      iconSize: [190, 36], iconAnchor: [95, 36]
-    });
-    L.marker([${entrance.latitude}, ${entrance.longitude}], { icon: entranceIcon }).addTo(map);
+    // ─── 3. ROAD & TUNNEL CONSTANTS & CURVE EQUATIONS ────────────────────────
+    var ROAD_WIDTH = 13.5;
+    var TOTAL_ROAD_LENGTH = 600;
+    var TUNNEL_START_Z = 200;
+    var TUNNEL_FORK_Z = 267; // Halt point & fork junction apex
+    var TUNNEL_CURVE_APEX_Z = 345;
+    var TUNNEL_END_Z = 420;
+    var TUNNEL_LENGTH = TUNNEL_END_Z - TUNNEL_START_Z; // 220 units (~320m)
 
-    var exitIcon = L.divIcon({
-      className: 'portal-marker',
-      html: '<div class="portal-wrap">' +
-            '<div class="portal-arch portal-exit-arch">✨ TUNNEL EXIT · GNSS RESTORED</div>' +
-            '<div class="portal-pin portal-exit-pin"></div></div>',
-      iconSize: [225, 36], iconAnchor: [112, 36]
-    });
-    L.marker([${exit.latitude}, ${exit.longitude}], { icon: exitIcon }).addTo(map);
-
-    var startIcon = L.divIcon({
-      className: 'portal-marker',
-      html: '<div class="flag-wrap">🏁 START</div>',
-      iconSize: [66, 24], iconAnchor: [33, 24]
-    });
-    L.marker([${start.latitude}, ${start.longitude}], { icon: startIcon }).addTo(map);
-
-    var destIcon = L.divIcon({
-      className: 'portal-marker',
-      html: '<div class="flag-wrap">🏁 DESTINATION</div>',
-      iconSize: [100, 24], iconAnchor: [50, 24]
-    });
-    L.marker([${dest.latitude}, ${dest.longitude}], { icon: destIcon }).addTo(map);
-
-    // ── 4. High-Visibility Trajectory Polylines with Glow ─────────────
-    var gnssPolyline = L.polyline([], { color: '#6366f1', weight: 5, opacity: 0.95, lineCap: 'round' }).addTo(map);
-    var drPolyline   = L.polyline([], { color: '#f59e0b', weight: 5, opacity: 0.95, dashArray: '8, 7', lineCap: 'round' }).addTo(map);
-    var fusedPolyline= L.polyline([], { color: '#10b981', weight: 5, opacity: 0.95, lineCap: 'round' }).addTo(map);
-
-    // ── 5. Detailed 3D Car Model SVG ──────────────────────────────────
-    var carMarker = null;
-    var currentMode = '';
-    var lastHeading = 0;
-
-    function build3DCarSvg(bodyColor) {
-      return '<svg width="34" height="34" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-        '<!-- 4 Wheels -->' +
-        '<rect x="4" y="6" width="4" height="7" rx="1.5" fill="#0f172a"/>' +
-        '<rect x="30" y="6" width="4" height="7" rx="1.5" fill="#0f172a"/>' +
-        '<rect x="4" y="24" width="4" height="7" rx="1.5" fill="#0f172a"/>' +
-        '<rect x="30" y="24" width="4" height="7" rx="1.5" fill="#0f172a"/>' +
-        '<!-- Main 3D Car Body Shell -->' +
-        '<rect x="7" y="4" width="24" height="30" rx="6" fill="' + bodyColor + '" stroke="#0f172a" stroke-width="1.2"/>' +
-        '<!-- Roof & Windshield Glass Layer -->' +
-        '<rect x="10" y="10" width="18" height="15" rx="3" fill="#1e293b"/>' +
-        '<path d="M11 11L13 14H25L27 11H11Z" fill="#94a3b8" fill-opacity="0.8"/>' +
-        '<rect x="12" y="15" width="14" height="7" rx="1.5" fill="#334155"/>' +
-        '<path d="M11 24L13 22H25L27 24H11Z" fill="#94a3b8" fill-opacity="0.6"/>' +
-        '<!-- Bright Xenon Headlights -->' +
-        '<ellipse cx="10" cy="5.5" rx="2.5" ry="1.5" fill="#fef08a"/>' +
-        '<ellipse cx="28" cy="5.5" rx="2.5" ry="1.5" fill="#fef08a"/>' +
-        '<!-- LED Taillights -->' +
-        '<rect x="9" y="32.5" width="5" height="1.5" rx="0.5" fill="#ef4444"/>' +
-        '<rect x="24" y="32.5" width="5" height="1.5" rx="0.5" fill="#ef4444"/>' +
-      '</svg>';
+    // Mathematical definition of the Main Route right turn:
+    function getRouteX(z) {
+      if (z <= 267) {
+        return 0;
+      } else if (z > 267 && z <= TUNNEL_CURVE_APEX_Z) {
+        // Dramatic smooth S-curve right turn: X sweeps from 0 to +10.5
+        var t = (z - 267) / (TUNNEL_CURVE_APEX_Z - 267);
+        var s = (1 - Math.cos(t * Math.PI)) / 2;
+        return s * 10.5;
+      } else if (z > TUNNEL_CURVE_APEX_Z && z <= TUNNEL_END_Z) {
+        // Smooth transition from apex X = +10.5 to exit portal X = +7.0
+        var t2 = (z - TUNNEL_CURVE_APEX_Z) / (TUNNEL_END_Z - TUNNEL_CURVE_APEX_Z);
+        return 10.5 - t2 * 3.5;
+      } else {
+        // Post-tunnel straight highway aligned with exit portal at X = +7.0
+        return 7.0;
+      }
     }
 
-    function createCarElement(heading, color, label) {
-      return '<div class="car-3d-wrapper">' +
-        '<div class="car-ground-shadow"></div>' +
-        '<div class="car-radar-ring" style="border: 2px solid ' + color + ';"></div>' +
-        '<div class="car-rotator" style="transform: rotate(' + heading + 'deg);">' +
-          '<div class="headlight-beams"></div>' +
-          build3DCarSvg(color) +
-        '</div>' +
-        '<div class="mode-pill" style="background-color: ' + color + '; box-shadow: 0 0 10px ' + color + '99;">' + label + '</div>' +
-      '</div>';
+    function getRouteTangentAngle(z) {
+      var dz = 0.4;
+      var x1 = getRouteX(z - dz);
+      var x2 = getRouteX(z + dz);
+      return Math.atan2(x2 - x1, 2 * dz);
     }
+
+    // Mathematical definition of the Left Bypass (Exit 4B):
+    function getLeftBypassX(z) {
+      if (z <= 267) return 0;
+      var t = (z - 267) / 95;
+      var s = (1 - Math.cos(Math.min(1, t) * Math.PI)) / 2;
+      return -s * 19.0;
+    }
+
+    function getLeftBypassAngle(z) {
+      var dz = 0.4;
+      var x1 = getLeftBypassX(z - dz);
+      var x2 = getLeftBypassX(z + dz);
+      return Math.atan2(x2 - x1, 2 * dz);
+    }
+
+    // Helper: Build a curved road ribbon geometry with exact perpendicular width
+    function createCurvedRoadMesh(startZ, endZ, width, curveFn, color, yOffset, opacity, roughness) {
+      var steps = Math.max(16, Math.round((endZ - startZ) / 2.0));
+      var numVertices = (steps + 1) * 2;
+      var positions = new Float32Array(numVertices * 3);
+      var indices = [];
+      var uvs = new Float32Array(numVertices * 2);
+
+      for (var i = 0; i <= steps; i++) {
+        var t = i / steps;
+        var z = startZ + t * (endZ - startZ);
+        var x = curveFn(z);
+
+        var dz = 0.3;
+        var xPrev = curveFn(z - dz);
+        var xNext = curveFn(z + dz);
+        var angle = Math.atan2(xNext - xPrev, 2 * dz);
+
+        var perpX = Math.cos(angle);
+        var perpZ = -Math.sin(angle);
+        var halfW = width / 2;
+        var idx = i * 2;
+
+        positions[idx * 3]     = x - perpX * halfW;
+        positions[idx * 3 + 1] = yOffset;
+        positions[idx * 3 + 2] = z - perpZ * halfW;
+
+        positions[(idx + 1) * 3]     = x + perpX * halfW;
+        positions[(idx + 1) * 3 + 1] = yOffset;
+        positions[(idx + 1) * 3 + 2] = z + perpZ * halfW;
+
+        uvs[idx * 2]     = 0;
+        uvs[idx * 2 + 1] = t * 12;
+        uvs[(idx + 1) * 2]     = 1;
+        uvs[(idx + 1) * 2 + 1] = t * 12;
+
+        if (i < steps) {
+          var a = i * 2;
+          var b = i * 2 + 1;
+          var c = (i + 1) * 2;
+          var d = (i + 1) * 2 + 1;
+          indices.push(a, c, b);
+          indices.push(b, c, d);
+        }
+      }
+
+      var geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+
+      var mat = new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: roughness !== undefined ? roughness : 0.75,
+        metalness: 0.15,
+        transparent: opacity !== undefined && opacity < 1.0,
+        opacity: opacity !== undefined ? opacity : 1.0,
+        side: THREE.DoubleSide
+      });
+
+      var mesh = new THREE.Mesh(geo, mat);
+      mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    // ─── 4. GROUND & ROADS ───────────────────────────────────────────────────
+    // Ground plane
+    var groundGeo = new THREE.PlaneGeometry(1200, 1200);
+    var groundMat = new THREE.MeshStandardMaterial({ color: 0x0a0f1d, roughness: 0.95 });
+    var ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(0, -0.05, TOTAL_ROAD_LENGTH / 2);
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // 1. Pre-Tunnel & Approach Road: Z = -40 to Z = 267 (straight at X = 0)
+    var approachRoadGeo = new THREE.PlaneGeometry(ROAD_WIDTH, 307);
+    var roadMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.75 });
+    var approachRoad = new THREE.Mesh(approachRoadGeo, roadMat);
+    approachRoad.rotation.x = -Math.PI / 2;
+    approachRoad.position.set(0, 0, (267 - 40) / 2);
+    approachRoad.receiveShadow = true;
+    scene.add(approachRoad);
+
+    // Pre-tunnel curbs
+    var curbMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.6 });
+    var leftCurbGeo = new THREE.BoxGeometry(1.2, 0.35, 307);
+    var leftCurb = new THREE.Mesh(leftCurbGeo, curbMat);
+    leftCurb.position.set(-ROAD_WIDTH / 2 - 0.6, 0.15, (267 - 40) / 2);
+    scene.add(leftCurb);
+
+    var rightCurbGeo = new THREE.BoxGeometry(1.2, 0.35, 307);
+    var rightCurb = new THREE.Mesh(rightCurbGeo, curbMat);
+    rightCurb.position.set(ROAD_WIDTH / 2 + 0.6, 0.15, (267 - 40) / 2);
+    scene.add(rightCurb);
+
+    // Pre-tunnel yellow dashes
+    var dashGroup = new THREE.Group();
+    var dashMat = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+    for (var dz = 10; dz < 264; dz += 12) {
+      var dGeo = new THREE.PlaneGeometry(0.35, 5.5);
+      var dMesh = new THREE.Mesh(dGeo, dashMat);
+      dMesh.rotation.x = -Math.PI / 2;
+      dMesh.position.set(0, 0.02, dz);
+      dashGroup.add(dMesh);
+    }
+    scene.add(dashGroup);
+
+    // 2. Post-Tunnel Straight Road: Z = 420 to Z = 640 (straight at X = 7.0)
+    var postRoadGeo = new THREE.PlaneGeometry(ROAD_WIDTH, 220);
+    var postRoad = new THREE.Mesh(postRoadGeo, roadMat);
+    postRoad.rotation.x = -Math.PI / 2;
+    postRoad.position.set(7.0, 0, (420 + 640) / 2);
+    postRoad.receiveShadow = true;
+    scene.add(postRoad);
+
+    var postLeftCurb = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.35, 220), curbMat);
+    postLeftCurb.position.set(7.0 - ROAD_WIDTH / 2 - 0.6, 0.15, (420 + 640) / 2);
+    scene.add(postLeftCurb);
+
+    var postRightCurb = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.35, 220), curbMat);
+    postRightCurb.position.set(7.0 + ROAD_WIDTH / 2 + 0.6, 0.15, (420 + 640) / 2);
+    scene.add(postRightCurb);
+
+    for (var pdz = 425; pdz < 635; pdz += 12) {
+      var pdMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 5.5), dashMat);
+      pdMesh.rotation.x = -Math.PI / 2;
+      pdMesh.position.set(7.0, 0.02, pdz);
+      scene.add(pdMesh);
+    }
+
+    // ─── 5. DRAMATIC & CLEAR MULTI-ROAD TUNNEL BIFURCATION (FORK & TURN) ─────
+    var forkGroup = new THREE.Group();
+
+    // 1. Right Main Route Road (The Dramatic Right Turn): Z = 267 to Z = 425
+    var rightTurnRoad = createCurvedRoadMesh(266, 422, 12.0, getRouteX, 0x1e293b, 0.015);
+    forkGroup.add(rightTurnRoad);
+
+    // Yellow dashed lane lines along the curve
+    for (var rz = 268; rz < 418; rz += 9) {
+      var rx = getRouteX(rz);
+      var rAngle = getRouteTangentAngle(rz);
+      var rdMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 4.5), dashMat);
+      rdMesh.rotation.x = -Math.PI / 2;
+      rdMesh.rotation.z = -rAngle;
+      rdMesh.position.set(rx, 0.035, rz);
+      forkGroup.add(rdMesh);
+    }
+
+    // Curved Left and Right Curbs along the Right Turn
+    function getRightRouteInnerCurb(z) { return getRouteX(z) - 6.4; }
+    function getRightRouteOuterCurb(z) { return getRouteX(z) + 6.4; }
+    var innerCurbMesh = createCurvedRoadMesh(267, 420, 0.8, getRightRouteInnerCurb, 0x475569, 0.12, 1.0, 0.5);
+    var outerCurbMesh = createCurvedRoadMesh(267, 420, 0.8, getRightRouteOuterCurb, 0x475569, 0.12, 1.0, 0.5);
+    forkGroup.add(innerCurbMesh);
+    forkGroup.add(outerCurbMesh);
+
+    // 2. Left Branch Road Surface (Clearly curving left at Z = 267 to 375)
+    var leftBypassRoad = createCurvedRoadMesh(266, 375, 10.5, getLeftBypassX, 0x141a24, 0.012);
+    forkGroup.add(leftBypassRoad);
+
+    // Left branch red lane markings
+    var leftDashMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    for (var lz = 268; lz < 370; lz += 10) {
+      var lx = getLeftBypassX(lz);
+      var lAngle = getLeftBypassAngle(lz);
+      var ldMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 4.5), leftDashMat);
+      ldMesh.rotation.x = -Math.PI / 2;
+      ldMesh.rotation.z = -lAngle;
+      ldMesh.position.set(lx, 0.03, lz);
+      forkGroup.add(ldMesh);
+    }
+
+    // 3. Apex Concrete Crash Barrier Wedge with Hazard Stripes at Z = 270, X = 0
+    var wedgeGeo = new THREE.CylinderGeometry(0.7, 2.2, 3.8, 6);
+    var wedgeMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.45 });
+    var wedge = new THREE.Mesh(wedgeGeo, wedgeMat);
+    wedge.position.set(0, 1.9, 270);
+    forkGroup.add(wedge);
+
+    // Flashing Apex Hazard Light
+    var apexLight = new THREE.PointLight(0xf59e0b, 1.6, 20, 1.5);
+    apexLight.position.set(0, 4.2, 270);
+    forkGroup.add(apexLight);
+
+    // 4. Overhead Gantry Sign Spanning Both Tubes at Z = 265
+    var forkCanvas = document.createElement('canvas');
+    forkCanvas.width = 1024;
+    forkCanvas.height = 256;
+    var fctx = forkCanvas.getContext('2d');
+    fctx.fillStyle = '#0b0f19';
+    fctx.fillRect(0, 0, 1024, 256);
+    fctx.strokeStyle = '#f59e0b';
+    fctx.lineWidth = 14;
+    fctx.strokeRect(7, 7, 1010, 242);
+
+    fctx.fillStyle = '#ef4444';
+    fctx.font = 'bold 44px Arial, sans-serif';
+    fctx.fillText('⬅ EXIT 4B [BYPASS / REJECTED]', 28, 100);
+
+    fctx.fillStyle = '#10b981';
+    fctx.fillText('MAIN ROUTE · NH 275 [CHOSEN] ➡', 500, 100);
+
+    fctx.fillStyle = '#fde68a';
+    fctx.font = 'bold 30px Arial, sans-serif';
+    fctx.fillText('DEAD RECKONING ACTIVE — SENSORS DETECT RIGHT TUBE CURVE', 45, 190);
+
+    var forkSignTex = new THREE.CanvasTexture(forkCanvas);
+    var forkSignMat = new THREE.MeshBasicMaterial({ map: forkSignTex });
+    var forkSignMesh = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_WIDTH + 14, 3.8), forkSignMat);
+    forkSignMesh.position.set(0, 7.8, 265);
+    forkGroup.add(forkSignMesh);
+
+    // 5. Glowing Green Right-Turn Directional Arrows on Asphalt
+    var greenArrowMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+    var turnArrowPositions = [274, 290, 310, 330];
+    turnArrowPositions.forEach(function(az) {
+      var ax = getRouteX(az);
+      var aAngle = getRouteTangentAngle(az);
+      var arrowMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 3.6), greenArrowMat);
+      arrowMesh.rotation.x = -Math.PI / 2;
+      arrowMesh.rotation.z = -aAngle;
+      arrowMesh.position.set(ax, 0.04, az);
+      forkGroup.add(arrowMesh);
+    });
+
+    // 6. Neon Green Right-Turn Chevron Panels (>>>) along Outer Curved Wall
+    var chevronCanvas = document.createElement('canvas');
+    chevronCanvas.width = 256;
+    chevronCanvas.height = 128;
+    var cctx = chevronCanvas.getContext('2d');
+    cctx.fillStyle = '#064e3b';
+    cctx.fillRect(0, 0, 256, 128);
+    cctx.strokeStyle = '#34d399';
+    cctx.lineWidth = 8;
+    cctx.strokeRect(4, 4, 248, 120);
+    cctx.fillStyle = '#10b981';
+    cctx.font = 'bold 74px Arial, sans-serif';
+    cctx.textAlign = 'center';
+    cctx.fillText('▶▶▶', 128, 92);
+
+    var chevronTex = new THREE.CanvasTexture(chevronCanvas);
+    var chevronMat = new THREE.MeshBasicMaterial({ map: chevronTex, side: THREE.DoubleSide });
+    var chevronPositions = [282, 300, 320, 340];
+    chevronPositions.forEach(function(cz) {
+      var cx = getRouteX(cz) + 6.8;
+      var cAngle = getRouteTangentAngle(cz);
+      var cMesh = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.8), chevronMat);
+      cMesh.position.set(cx, 3.2, cz);
+      cMesh.rotation.y = -cAngle - Math.PI / 2;
+      forkGroup.add(cMesh);
+
+      var chevronLight = new THREE.PointLight(0x10b981, 0.8, 8, 1.8);
+      chevronLight.position.set(cx - 0.5, 3.2, cz);
+      forkGroup.add(chevronLight);
+    });
+
+    // 7. Left Branch Arched Tunnel Tube (Red Ambient Interior)
+    var leftTubeGeo = new THREE.CylinderGeometry(6.5, 6.5, 105, 12, 1, true, 0, Math.PI);
+    var leftTubeMat = new THREE.MeshStandardMaterial({
+      color: 0x3b0718,
+      roughness: 0.3,
+      transparent: true,
+      opacity: 0.28,
+      side: THREE.DoubleSide
+    });
+    var leftTube = new THREE.Mesh(leftTubeGeo, leftTubeMat);
+    leftTube.rotation.z = Math.PI / 2;
+    leftTube.rotation.y = Math.PI / 2 - 0.38;
+    leftTube.position.set(-14, 0, 320);
+    forkGroup.add(leftTube);
+
+    scene.add(forkGroup);
+
+    // ─── 6. 3D TRANSLUCENT CUTAWAY TUNNEL TUBES & ARCH RIBS ──────────────────
+    var tunnelGroup = new THREE.Group();
+
+    // 1. Pre-fork Common Tunnel Tube (Z = 200 to Z = 267)
+    var straightTubeGeo = new THREE.CylinderGeometry(
+      ROAD_WIDTH / 2 + 1.6,
+      ROAD_WIDTH / 2 + 1.6,
+      67,
+      16, 1, true, 0, Math.PI
+    );
+    var tunnelTubeMat = new THREE.MeshStandardMaterial({
+      color: 0x1e1b4b,
+      roughness: 0.3,
+      metalness: 0.7,
+      transparent: true,
+      opacity: 0.22,
+      side: THREE.DoubleSide,
+    });
+    var straightTube = new THREE.Mesh(straightTubeGeo, tunnelTubeMat);
+    straightTube.rotation.z = Math.PI / 2;
+    straightTube.rotation.y = Math.PI / 2;
+    straightTube.position.set(0, 0, (200 + 267) / 2);
+    tunnelGroup.add(straightTube);
+
+    // Common tube arch ribs
+    var ribMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6 });
+    var lampMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
+
+    for (var tz = 212; tz < 265; tz += 18) {
+      var archGeo = new THREE.TorusGeometry(ROAD_WIDTH / 2 + 1.5, 0.45, 8, 16, Math.PI);
+      var archMesh = new THREE.Mesh(archGeo, ribMat);
+      archMesh.position.set(0, 0, tz);
+      tunnelGroup.add(archMesh);
+
+      var lampMesh = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.3, 0.6), lampMat);
+      lampMesh.position.set(0, 6.4, tz);
+      tunnelGroup.add(lampMesh);
+
+      var pLight = new THREE.PointLight(0xfbbf24, 0.8, 18, 1.6);
+      pLight.position.set(0, 5.8, tz);
+      tunnelGroup.add(pLight);
+    }
+
+    // 2. Right Curved Tube Arch Ribs along the Turn: Z = 268 to Z = 415
+    for (var rtz = 274; rtz < 415; rtz += 14) {
+      var rxPos = getRouteX(rtz);
+      var rAngle = getRouteTangentAngle(rtz);
+
+      var cArchGeo = new THREE.TorusGeometry(ROAD_WIDTH / 2 + 0.6, 0.45, 8, 16, Math.PI);
+      var cArchMesh = new THREE.Mesh(cArchGeo, ribMat);
+      cArchMesh.position.set(rxPos, 0, rtz);
+      cArchMesh.rotation.y = -rAngle;
+      tunnelGroup.add(cArchMesh);
+
+      var cLampMesh = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.3, 0.6), lampMat);
+      cLampMesh.position.set(rxPos, 6.2, rtz);
+      cLampMesh.rotation.y = -rAngle;
+      tunnelGroup.add(cLampMesh);
+
+      var cLight = new THREE.PointLight(0xfbbf24, 0.75, 18, 1.6);
+      cLight.position.set(rxPos, 5.6, rtz);
+      tunnelGroup.add(cLight);
+    }
+
+    // ─── 7. HIGH-VISIBILITY PORTALS (ENTRANCE & EXIT) ────────────────────────
+    function createHighVisibilityPortal(xPos, zPos, titleText, isEntrance) {
+      var pGroup = new THREE.Group();
+
+      var pillarGeo = new THREE.BoxGeometry(3.5, 11, 4);
+      var pillarMat = new THREE.MeshStandardMaterial({
+        color: isEntrance ? 0x1e1b4b : 0x064e3b,
+        roughness: 0.5
+      });
+
+      var leftP = new THREE.Mesh(pillarGeo, pillarMat);
+      leftP.position.set(xPos - ROAD_WIDTH / 2 - 2.2, 5.5, zPos);
+      pGroup.add(leftP);
+
+      var rightP = new THREE.Mesh(pillarGeo, pillarMat);
+      rightP.position.set(xPos + ROAD_WIDTH / 2 + 2.2, 5.5, zPos);
+      pGroup.add(rightP);
+
+      var beamGeo = new THREE.BoxGeometry(ROAD_WIDTH + 8, 3.4, 4);
+      var topBeam = new THREE.Mesh(beamGeo, pillarMat);
+      topBeam.position.set(xPos, 10.8, zPos);
+      pGroup.add(topBeam);
+
+      // Flashing Beacons
+      var beaconMat = new THREE.MeshBasicMaterial({ color: isEntrance ? 0xf59e0b : 0x10b981 });
+      var leftBeacon = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.9, 12), beaconMat);
+      leftBeacon.position.set(xPos - ROAD_WIDTH / 2 - 1.8, 13.0, zPos);
+      pGroup.add(leftBeacon);
+
+      var rightBeacon = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.9, 12), beaconMat);
+      rightBeacon.position.set(xPos + ROAD_WIDTH / 2 + 1.8, 13.0, zPos);
+      pGroup.add(rightBeacon);
+
+      // Overhead High-Contrast Sign
+      var canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 256;
+      var ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = isEntrance ? '#111827' : '#022c22';
+      ctx.fillRect(0, 0, 1024, 256);
+
+      ctx.strokeStyle = isEntrance ? '#f59e0b' : '#10b981';
+      ctx.lineWidth = 14;
+      ctx.strokeRect(8, 8, 1008, 240);
+
+      ctx.fillStyle = isEntrance ? '#f59e0b' : '#10b981';
+      ctx.font = 'bold 38px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isEntrance ? '⚠️ GNSS DENIED SECTOR' : '✨ GNSS RECOVERY ZONE', 512, 70);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 58px Arial, sans-serif';
+      ctx.fillText(titleText, 512, 160);
+
+      ctx.fillStyle = isEntrance ? '#fde68a' : '#a7f3d0';
+      ctx.font = 'bold 30px Arial, sans-serif';
+      ctx.fillText(isEntrance ? 'DEAD RECKONING INERTIAL TRACKING' : 'KALMAN SENSOR FUSION ACTIVE', 512, 220);
+
+      var signTex = new THREE.CanvasTexture(canvas);
+      var signMat = new THREE.MeshBasicMaterial({ map: signTex });
+      var signMesh = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_WIDTH + 5, 3.2), signMat);
+      signMesh.position.set(xPos, 10.8, isEntrance ? zPos - 2.2 : zPos + 2.2);
+      if (!isEntrance) signMesh.rotation.y = Math.PI;
+      pGroup.add(signMesh);
+
+      scene.add(pGroup);
+    }
+
+    createHighVisibilityPortal(0, TUNNEL_START_Z, '🚧 TUNNEL ENTRANCE [ 320m ]', true);
+    createHighVisibilityPortal(7.0, TUNNEL_END_Z, '✨ TUNNEL EXIT [ RESTORED ]', false);
+    scene.add(tunnelGroup);
+
+    // ─── 8. 3D CITY BUILDINGS ────────────────────────────────────────────────
+    var buildingColors = [0x1e293b, 0x0f172a, 0x334155, 0x1e1b4b, 0x172554];
+    var windowMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+
+    function createBuilding(x, z, w, h, d, color) {
+      var bGroup = new THREE.Group();
+      var bGeo = new THREE.BoxGeometry(w, h, d);
+      var bMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.5, metalness: 0.2 });
+      var bMesh = new THREE.Mesh(bGeo, bMat);
+      bMesh.position.y = h / 2;
+      bMesh.castShadow = true;
+      bMesh.receiveShadow = true;
+      bGroup.add(bMesh);
+
+      var rows = Math.floor(h / 6);
+      var cols = Math.floor(w / 4);
+      for (var r = 1; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          if (Math.random() > 0.4) {
+            var win = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.8), windowMat);
+            win.position.set(-w / 2 + 2 + c * 3.5, r * 5.5, d / 2 + 0.05);
+            bGroup.add(win);
+          }
+        }
+      }
+
+      bGroup.position.set(x, 0, z);
+      scene.add(bGroup);
+    }
+
+    // Pre-tunnel skyscrapers (aligned around X = 0)
+    for (var z = 20; z < TUNNEL_START_Z - 25; z += 35) {
+      var hLeft = 25 + Math.random() * 45;
+      createBuilding(-ROAD_WIDTH / 2 - 18, z, 22, hLeft, 24, buildingColors[Math.floor(Math.random() * buildingColors.length)]);
+      var hRight = 30 + Math.random() * 40;
+      createBuilding(ROAD_WIDTH / 2 + 18, z, 22, hRight, 24, buildingColors[Math.floor(Math.random() * buildingColors.length)]);
+    }
+
+    // Post-tunnel skyscrapers (aligned around X = 7.0)
+    for (var z = TUNNEL_END_Z + 30; z < TOTAL_ROAD_LENGTH; z += 35) {
+      var hLeft = 25 + Math.random() * 50;
+      createBuilding(7.0 - ROAD_WIDTH / 2 - 18, z, 22, hLeft, 25, buildingColors[Math.floor(Math.random() * buildingColors.length)]);
+      var hRight = 30 + Math.random() * 45;
+      createBuilding(7.0 + ROAD_WIDTH / 2 + 18, z, 22, hRight, 25, buildingColors[Math.floor(Math.random() * buildingColors.length)]);
+    }
+
+    // ─── 9. DETAILED 3D VEHICLE MODEL WITH STEERING WHEELS ───────────────────
+    var carGroup = new THREE.Group();
+
+    // Metallic Chassis
+    var carBodyMat = new THREE.MeshStandardMaterial({
+      color: 0x4f46e5,
+      metalness: 0.85,
+      roughness: 0.25,
+    });
+    var bodyGeo = new THREE.BoxGeometry(2.6, 0.95, 5.2);
+    var bodyMesh = new THREE.Mesh(bodyGeo, carBodyMat);
+    bodyMesh.position.y = 0.8;
+    bodyMesh.castShadow = true;
+    carGroup.add(bodyMesh);
+
+    // Cabin Glass
+    var cabinMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      roughness: 0.1,
+      metalness: 0.9,
+    });
+    var cabinGeo = new THREE.BoxGeometry(2.1, 0.75, 2.8);
+    var cabinMesh = new THREE.Mesh(cabinGeo, cabinMat);
+    cabinMesh.position.set(0, 1.55, -0.2);
+    cabinMesh.castShadow = true;
+    carGroup.add(cabinMesh);
+
+    // 4 Wheels (front wheels have pivot for realistic steering angle)
+    var wheelGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.38, 16);
+    var wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.9 });
+    var rimMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.2 });
+
+    var wheels = [];
+    var wheelOffsets = [
+      [-1.35, 0.46, 1.5],  // front left
+      [1.35, 0.46, 1.5],   // front right
+      [-1.35, 0.46, -1.5], // rear left
+      [1.35, 0.46, -1.5],  // rear right
+    ];
+
+    wheelOffsets.forEach(function(offset, index) {
+      var wGroup = new THREE.Group();
+      var tire = new THREE.Mesh(wheelGeo, wheelMat);
+      tire.rotation.z = Math.PI / 2;
+      tire.castShadow = true;
+      wGroup.add(tire);
+
+      var rim = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.39, 8), rimMat);
+      rim.rotation.z = Math.PI / 2;
+      wGroup.add(rim);
+
+      wGroup.position.set(offset[0], offset[1], offset[2]);
+      carGroup.add(wGroup);
+      wheels.push(wGroup);
+    });
+
+    // Xenon Headlights
+    var headlightMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    var leftHead = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.1), headlightMat);
+    leftHead.position.set(-0.95, 0.85, 2.61);
+    carGroup.add(leftHead);
+
+    var rightHead = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.1), headlightMat);
+    rightHead.position.set(0.95, 0.85, 2.61);
+    carGroup.add(rightHead);
+
+    // Headlight SpotLight
+    var headSpot = new THREE.SpotLight(0xfef08a, 2.8, 70, Math.PI / 5, 0.4, 1);
+    headSpot.position.set(0, 1.0, 2.7);
+    var spotTarget = new THREE.Object3D();
+    spotTarget.position.set(0, 0, 35);
+    carGroup.add(spotTarget);
+    headSpot.target = spotTarget;
+    carGroup.add(headSpot);
+
+    // Taillights
+    var tailMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    var leftTail = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.16, 0.1), tailMat);
+    leftTail.position.set(-0.95, 0.85, -2.61);
+    carGroup.add(leftTail);
+
+    var rightTail = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.16, 0.1), tailMat);
+    rightTail.position.set(0.95, 0.85, -2.61);
+    carGroup.add(rightTail);
+
+    // Top Roof Marker Disc
+    var markerPillMat = new THREE.MeshBasicMaterial({ color: 0x6366f1 });
+    var markerPill = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.2, 16), markerPillMat);
+    markerPill.position.set(0, 2.05, -0.2);
+    carGroup.add(markerPill);
+
+    carGroup.position.set(0, 0, 10);
+    scene.add(carGroup);
+
+    // ─── 10. DYNAMIC PRE-ALLOCATED ZERO-FLICKER TRAJECTORY RIBBONS ───────────
+    // Pre-tunnel GNSS Ribbon (Straight, X = 0)
+    var gnssRibbonMat = new THREE.MeshBasicMaterial({ color: 0x6366f1, side: THREE.DoubleSide });
+    var gnssRibbonGeo = new THREE.PlaneGeometry(1.2, 1);
+    var gnssRibbonMesh = new THREE.Mesh(gnssRibbonGeo, gnssRibbonMat);
+    gnssRibbonMesh.rotation.x = -Math.PI / 2;
+    gnssRibbonMesh.position.set(0, 0.04, 0);
+    gnssRibbonMesh.visible = false;
+    scene.add(gnssRibbonMesh);
+
+    // In-tunnel Dead Reckoning Ribbon (Dynamically follows curve)
+    var DR_MAX_SEGMENTS = 120;
+    var drPositions = new Float32Array((DR_MAX_SEGMENTS + 1) * 2 * 3);
+    var drIndices = [];
+    for (var di = 0; di < DR_MAX_SEGMENTS; di++) {
+      var da = di * 2;
+      var db = di * 2 + 1;
+      var dc = (di + 1) * 2;
+      var dd = (di + 1) * 2 + 1;
+      drIndices.push(da, dc, db);
+      drIndices.push(db, dc, dd);
+    }
+    var drRibbonGeo = new THREE.BufferGeometry();
+    drRibbonGeo.setAttribute('position', new THREE.BufferAttribute(drPositions, 3));
+    drRibbonGeo.setIndex(drIndices);
+    var drRibbonMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide });
+    var drRibbonMesh = new THREE.Mesh(drRibbonGeo, drRibbonMat);
+    drRibbonMesh.visible = false;
+    scene.add(drRibbonMesh);
+
+    // Post-tunnel Fused Ribbon (Straight, X = 7.0)
+    var fusedRibbonMat = new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide });
+    var fusedRibbonGeo = new THREE.PlaneGeometry(1.2, 1);
+    var fusedRibbonMesh = new THREE.Mesh(fusedRibbonGeo, fusedRibbonMat);
+    fusedRibbonMesh.rotation.x = -Math.PI / 2;
+    fusedRibbonMesh.position.set(7.0, 0.04, 0);
+    fusedRibbonMesh.visible = false;
+    scene.add(fusedRibbonMesh);
+
+    // ─── 11. GOOGLE NAVIGATION 3D CHASE CAMERA & INTERACTIVE DIALOG ──────────
+    var cameraMode = 'DRIVE3D'; // 'DRIVE3D' | 'TOP' | 'HOOD'
+    var targetCameraPos = new THREE.Vector3();
+    var targetLookAt = new THREE.Vector3();
+
+    function toggleCameraView() {
+      if (cameraMode === 'DRIVE3D') {
+        cameraMode = 'TOP';
+        document.getElementById('cam-toggle').textContent = '🔝 TOP VIEW';
+      } else if (cameraMode === 'TOP') {
+        cameraMode = 'HOOD';
+        document.getElementById('cam-toggle').textContent = '🏎️ HOOD CAM';
+      } else {
+        cameraMode = 'DRIVE3D';
+        document.getElementById('cam-toggle').textContent = '🚘 3D DRIVE CAM';
+      }
+    }
+    window.toggleCameraView = toggleCameraView;
+
+    function notifyParent(type) {
+      var msg = JSON.stringify({ type: type });
+      if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        window.ReactNativeWebView.postMessage(msg);
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(msg, '*');
+      }
+      if (type === 'fork_pause' && window.onForkDecisionPause) {
+        window.onForkDecisionPause();
+      }
+      if (type === 'fork_resume' && window.onForkDecisionResume) {
+        window.onForkDecisionResume();
+      }
+    }
+
+    var decisionShown = false;
+    var isPausedForDecision = false;
+
+    function triggerDecisionDialog() {
+      if (decisionShown) return;
+      decisionShown = true;
+      isPausedForDecision = true;
+
+      // Lock position right at the fork stop line
+      simData.carZ = TUNNEL_FORK_Z;
+      simData.progress = (TUNNEL_FORK_Z / TOTAL_ROAD_LENGTH) * 100;
+      simData.targetProgress = simData.progress;
+      simData.speedKmh = 0;
+
+      var hudSpeed = document.getElementById('hud-speed');
+      if (hudSpeed) {
+        hudSpeed.textContent = '0 km/h [HALTED AT FORK]';
+        hudSpeed.style.color = '#f59e0b';
+      }
+
+      var modal = document.getElementById('decision-dialog-backdrop');
+      if (modal) modal.style.display = 'flex';
+
+      notifyParent('fork_pause');
+    }
+
+    function dismissDecisionDialog() {
+      var modal = document.getElementById('decision-dialog-backdrop');
+      if (modal) modal.style.display = 'none';
+
+      isPausedForDecision = false;
+      simData.speedKmh = 48;
+
+      var hudSpeed = document.getElementById('hud-speed');
+      if (hudSpeed) {
+        hudSpeed.textContent = '48 km/h';
+        hudSpeed.style.color = '#38bdf8';
+      }
+
+      notifyParent('fork_resume');
+    }
+    window.dismissDecisionDialog = dismissDecisionDialog;
+
+    // Simulation Data State & Targets
+    var simData = {
+      progress: 0,
+      targetProgress: 0,
+      carZ: 10,
+      carX: 0,
+      carHeading: 0,
+      speedKmh: 48,
+      state: 'GNSS_ACTIVE',
+      isInsideTunnel: false,
+      isApproachingTunnel: false,
+      driftMeters: 0,
+    };
 
     function updateSimulationMap(data) {
       if (!data) return;
 
-      // Update trajectory paths
-      if (data.gnss) gnssPolyline.setLatLngs(data.gnss);
-      if (data.dr) drPolyline.setLatLngs(data.dr);
-      if (data.fused) fusedPolyline.setLatLngs(data.fused);
+      var prog = (data.position && data.progress !== undefined)
+        ? data.progress
+        : (data.state === 'COMPLETED' ? 100 : simData.progress);
 
-      // 3D Perspective Tilt Transitions
-      if (data.isInsideTunnel) {
-        mapStage.className = 'tunnel-tilt';
-        tunnelAtmosphere.classList.add('active');
-        if (hudSats) hudSats.textContent = '0 🚫 (BLOCKED)';
-        if (hudMode) { hudMode.textContent = 'DEAD RECKONING'; hudMode.style.color = '#f59e0b'; }
-      } else if (data.isApproachingTunnel) {
-        mapStage.className = 'approach-tilt';
-        tunnelAtmosphere.classList.remove('active');
-        if (hudSats) hudSats.textContent = '14 🛰️';
-        if (hudMode) { hudMode.textContent = 'GNSS + IMU'; hudMode.style.color = '#4ade80'; }
+      if (!isPausedForDecision) {
+        simData.targetProgress = prog;
+      }
+      simData.state = data.state || 'GNSS_ACTIVE';
+      simData.isInsideTunnel = !!data.isInsideTunnel;
+      simData.isApproachingTunnel = !!data.isApproachingTunnel;
+      simData.driftMeters = data.driftMeters || 0;
+      if (!isPausedForDecision) {
+        simData.speedKmh = data.speedKmh || 48;
+      }
+
+      // Update HUD elements
+      var hudSats = document.getElementById('hud-sats');
+      var hudDrift = document.getElementById('hud-drift');
+      var hudState = document.getElementById('hud-state');
+      var hudProgress = document.getElementById('hud-progress');
+      var hudSpeed = document.getElementById('hud-speed');
+
+      if (hudProgress) hudProgress.textContent = Math.round(prog) + '%';
+      if (hudSpeed && !isPausedForDecision) {
+        hudSpeed.textContent = Math.round(simData.speedKmh) + ' km/h';
+        hudSpeed.style.color = '#38bdf8';
+      }
+
+      if (simData.isInsideTunnel) {
+        if (hudSats) hudSats.textContent = '0 🚫 (IN TUNNEL)';
+        if (hudDrift) hudDrift.textContent = Number(simData.driftMeters).toFixed(1) + ' m';
+        if (hudState) {
+          hudState.textContent = 'DEAD RECKONING';
+          hudState.style.background = '#f59e0b';
+          hudState.style.boxShadow = '0 0 14px rgba(245, 158, 11, 0.6)';
+        }
+        carBodyMat.color.setHex(0xf59e0b);
+        markerPillMat.color.setHex(0xf59e0b);
+      } else if (simData.state === 'FUSED' || simData.state === 'COMPLETED') {
+        if (hudSats) hudSats.textContent = '14 🛰️ (RESTORED)';
+        if (hudDrift) hudDrift.textContent = '0.0 m';
+        if (hudState) {
+          hudState.textContent = 'FUSED (GNSS+IMU)';
+          hudState.style.background = '#10b981';
+          hudState.style.boxShadow = '0 0 14px rgba(16, 185, 129, 0.6)';
+        }
+        carBodyMat.color.setHex(0x10b981);
+        markerPillMat.color.setHex(0x10b981);
       } else {
-        mapStage.className = '';
-        tunnelAtmosphere.classList.remove('active');
         if (hudSats) hudSats.textContent = '14 🛰️';
-        if (hudMode) { hudMode.textContent = 'GNSS + IMU'; hudMode.style.color = '#4ade80'; }
-      }
-
-      if (data.driftMeters !== undefined && hudDrift) {
-        hudDrift.textContent = Number(data.driftMeters).toFixed(1) + ' m';
-      }
-
-      // Finish state
-      if (data.state === 'COMPLETED') {
-        mapStage.className = '';
-        map.fitBounds(plannedRouteLine.getBounds(), { padding: [50, 50], animate: true, duration: 1.0 });
-        if (hudMode) { hudMode.textContent = 'COMPLETED'; hudMode.style.color = '#38bdf8'; }
-      }
-
-      // Car position and camera
-      if (data.position) {
-        var latlng = [data.position[0], data.position[1]];
-        var heading = data.heading || 0;
-        var mode = data.state || 'GNSS_ACTIVE';
-        var label = data.label || 'GNSS';
-        var color = data.color || '#4f46e5';
-
-        if (!carMarker) {
-          currentMode = mode;
-          lastHeading = heading;
-          carMarker = L.marker(latlng, {
-            icon: L.divIcon({
-              className: 'car-marker-container',
-              html: createCarElement(heading, color, label),
-              iconSize: [72, 72],
-              iconAnchor: [36, 36]
-            }),
-            zIndexOffset: 3000
-          }).addTo(map);
-        } else {
-          carMarker.setLatLng(latlng);
-          if (mode !== currentMode || Math.abs(heading - lastHeading) > 3) {
-            currentMode = mode;
-            lastHeading = heading;
-            carMarker.setIcon(L.divIcon({
-              className: 'car-marker-container',
-              html: createCarElement(heading, color, label),
-              iconSize: [72, 72],
-              iconAnchor: [36, 36]
-            }));
-          }
+        if (hudDrift) hudDrift.textContent = '0.0 m';
+        if (hudState) {
+          hudState.textContent = 'GNSS ACTIVE';
+          hudState.style.background = '#4f46e5';
+          hudState.style.boxShadow = '0 0 14px rgba(79, 70, 229, 0.6)';
         }
+        carBodyMat.color.setHex(0x4f46e5);
+        markerPillMat.color.setHex(0x6366f1);
+      }
 
-        // Camera follow
-        if (data.state !== 'COMPLETED') {
-          var targetZoom = 17;
-          if (data.isApproachingTunnel) targetZoom = 16.0;
-          else if (data.isInsideTunnel) targetZoom = 16.8;
-
-          if (Math.abs(map.getZoom() - targetZoom) > 0.1) {
-            map.setView(latlng, targetZoom, { animate: true, duration: 0.6 });
-          } else {
-            map.panTo(latlng, { animate: true, duration: 0.25 });
-          }
-        }
+      // Reset state upon re-run or restart
+      if (data.state === 'STARTING' || data.state === 'IDLE') {
+        decisionShown = false;
+        isPausedForDecision = false;
+        var modal = document.getElementById('decision-dialog-backdrop');
+        if (modal) modal.style.display = 'none';
       }
     }
-
     window.updateSimulationMap = updateSimulationMap;
 
+    // ─── 12. 60 FPS FLICKER-FREE RENDER LOOP ─────────────────────────────────
+    var clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      var delta = clock.getDelta();
+
+      if (isPausedForDecision) {
+        // Car is stopped completely at the fork line until user clicks Next button
+        simData.carZ = TUNNEL_FORK_Z;
+        simData.progress = (TUNNEL_FORK_Z / TOTAL_ROAD_LENGTH) * 100;
+        simData.targetProgress = simData.progress;
+      } else {
+        // Smooth continuous progress interpolation
+        simData.progress += (simData.targetProgress - simData.progress) * 0.15;
+        simData.carZ = (simData.progress / 100) * TOTAL_ROAD_LENGTH;
+
+        // Check if car reaches the fork junction: must halt and show decision dialog
+        if (!decisionShown && simData.isInsideTunnel && simData.carZ >= TUNNEL_FORK_Z - 1.5) {
+          triggerDecisionDialog();
+        }
+      }
+
+      // Compute exact position and tangent angle along the route curve
+      var routeX = getRouteX(simData.carZ);
+      var routeHeading = getRouteTangentAngle(simData.carZ);
+
+      if (simData.isInsideTunnel) {
+        // Add subtle lateral DR drift
+        routeX += Math.min(2.0, simData.driftMeters * 0.4);
+      }
+
+      // Smooth kinematic interpolation
+      simData.carX += (routeX - simData.carX) * 0.25;
+      simData.carHeading += (routeHeading - simData.carHeading) * 0.25;
+
+      // Update car position & rotation
+      carGroup.position.set(simData.carX, 0, simData.carZ);
+      carGroup.rotation.y = simData.carHeading;
+
+      // Front wheels turn realistically into the right curve
+      var steerAngle = 0;
+      if (simData.carZ >= 267 && simData.carZ <= TUNNEL_CURVE_APEX_Z + 15) {
+        // Front wheels turn noticeably into the right turn bend
+        steerAngle = Math.min(0.48, Math.max(-0.48, routeHeading * 2.2));
+        // Dynamic subtle chassis roll into the turn
+        bodyMesh.rotation.z = -routeHeading * 0.22;
+      } else {
+        steerAngle = 0;
+        bodyMesh.rotation.z = 0;
+      }
+      wheels[0].rotation.y = steerAngle;
+      wheels[1].rotation.y = steerAngle;
+
+      // Spin wheels smoothly when car is in motion
+      var spinSpeed = (!isPausedForDecision ? (simData.speedKmh / 3.6) : 0) * delta * 4;
+      wheels.forEach(function(w) {
+        w.children[0].rotation.x += spinSpeed;
+      });
+
+      // Flashing beacons
+      var strobe = Math.sin(clock.getElapsedTime() * 8) > 0;
+      apexLight.intensity = strobe ? 1.8 : 0.4;
+
+      // Update Pre-allocated 3D Trajectory Ribbons
+      // 1. GNSS ribbon (Pre-tunnel, X = 0)
+      var gnssLen = Math.min(simData.carZ, TUNNEL_START_Z) - 5;
+      if (gnssLen > 0.5) {
+        gnssRibbonMesh.visible = true;
+        gnssRibbonMesh.scale.set(1, gnssLen, 1);
+        gnssRibbonMesh.position.set(0, 0.04, 5 + gnssLen / 2);
+      } else {
+        gnssRibbonMesh.visible = false;
+      }
+
+      // 2. Dead Reckoning ribbon (In-tunnel, dynamically follows curve)
+      if (simData.carZ > TUNNEL_START_Z) {
+        drRibbonMesh.visible = true;
+        var endDRZ = Math.min(simData.carZ, TUNNEL_END_Z);
+        var drSpan = endDRZ - TUNNEL_START_Z;
+        var steps = Math.min(DR_MAX_SEGMENTS, Math.max(2, Math.floor(drSpan / 2.0)));
+
+        var posArr = drRibbonGeo.attributes.position.array;
+        for (var si = 0; si <= steps; si++) {
+          var sz = TUNNEL_START_Z + (si / steps) * drSpan;
+          var sx = getRouteX(sz);
+          var sAngle = getRouteTangentAngle(sz);
+          var pX = Math.cos(sAngle);
+          var pZ = -Math.sin(sAngle);
+          var hw = 0.6;
+          var sIdx = si * 2;
+
+          posArr[sIdx * 3]     = sx - pX * hw;
+          posArr[sIdx * 3 + 1] = 0.045;
+          posArr[sIdx * 3 + 2] = sz - pZ * hw;
+
+          posArr[(sIdx + 1) * 3]     = sx + pX * hw;
+          posArr[(sIdx + 1) * 3 + 1] = 0.045;
+          posArr[(sIdx + 1) * 3 + 2] = sz + pZ * hw;
+        }
+
+        drRibbonGeo.attributes.position.needsUpdate = true;
+        drRibbonGeo.setDrawRange(0, steps * 6);
+      } else {
+        drRibbonMesh.visible = false;
+      }
+
+      // 3. Fused ribbon (Post-tunnel, X = 7.0)
+      if (simData.carZ > TUNNEL_END_Z) {
+        var fusedLen = simData.carZ - TUNNEL_END_Z;
+        if (fusedLen > 0.5) {
+          fusedRibbonMesh.visible = true;
+          fusedRibbonMesh.scale.set(1, fusedLen, 1);
+          fusedRibbonMesh.position.set(7.0, 0.04, TUNNEL_END_Z + fusedLen / 2);
+        }
+      } else {
+        fusedRibbonMesh.visible = false;
+      }
+
+      // Google Navigation 3D Chase Camera: Follows behind car and tracks into the curve
+      if (cameraMode === 'DRIVE3D') {
+        var camDist = 17;
+        var camHeight = 8.5;
+        var lookAheadDist = 28;
+        var yaw = carGroup.rotation.y;
+
+        targetCameraPos.set(
+          simData.carX - Math.sin(yaw) * camDist,
+          camHeight,
+          simData.carZ - Math.cos(yaw) * camDist
+        );
+        targetLookAt.set(
+          simData.carX + Math.sin(yaw) * lookAheadDist,
+          2.0,
+          simData.carZ + Math.cos(yaw) * lookAheadDist
+        );
+        camera.position.lerp(targetCameraPos, 0.12);
+        camera.lookAt(targetLookAt);
+      } else if (cameraMode === 'TOP') {
+        // High top-down view
+        targetCameraPos.set(simData.carX, 38, simData.carZ - 6);
+        targetLookAt.set(simData.carX, 0, simData.carZ + 8);
+        camera.position.lerp(targetCameraPos, 0.15);
+        camera.lookAt(targetLookAt);
+      } else if (cameraMode === 'HOOD') {
+        // Front bumper / driver hood view
+        var yaw = carGroup.rotation.y;
+        targetCameraPos.set(simData.carX, 1.45, simData.carZ + 1.2);
+        targetLookAt.set(
+          simData.carX + Math.sin(yaw) * 35,
+          1.2,
+          simData.carZ + Math.cos(yaw) * 35
+        );
+        camera.position.lerp(targetCameraPos, 0.25);
+        camera.lookAt(targetLookAt);
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // ─── 13. COMMUNICATION WITH APP ──────────────────────────────────────────
     document.addEventListener('message', function(e) {
       try { updateSimulationMap(JSON.parse(e.data)); } catch(err) {}
     });
@@ -523,12 +1310,15 @@ function buildSimulationHtml(center: LatLng): string {
       try { updateSimulationMap(JSON.parse(e.data)); } catch(err) {}
     });
 
+    window.addEventListener('resize', function() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
     setTimeout(function() {
-      map.invalidateSize();
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage('ready');
-      }
-    }, 250);
+      notifyParent('ready');
+    }, 200);
   </script>
 </body>
 </html>`;
@@ -539,9 +1329,12 @@ export function SimulationMapView({
   isPresentationMode = false,
   style,
   onMapReady,
+  onForkDecisionPause,
+  onForkDecisionResume,
 }: SimulationMapViewProps) {
   const webRef = useRef<WebView>(null);
   const readyRef = useRef(false);
+  const iframeRef = useRef<any>(null);
 
   const initialCenter = SIMULATION_ROUTE.start;
 
@@ -553,14 +1346,10 @@ export function SimulationMapView({
   const markerColor = isDR ? '#8B5CF6' : isRecovering ? '#F59E0B' : isFused ? '#10B981' : colors.primary;
   const markerLabel = isDR ? 'DR' : isRecovering ? 'FUSION' : isFused ? 'FUSED' : 'GNSS';
 
-  const iframeRef = useRef<any>(null);
-
   const pushUpdate = useCallback(() => {
     const payload = {
-      gnss: frame.gnssTrajectory.map(c => [c.latitude, c.longitude]),
-      dr: frame.drTrajectory.map(c => [c.latitude, c.longitude]),
-      fused: frame.fusedTrajectory.map(c => [c.latitude, c.longitude]),
-      position: [frame.carPosition.latitude, frame.carPosition.longitude],
+      progress: frame.routeProgressPercent,
+      speedKmh: frame.carSpeedKmh,
       heading: frame.carHeading,
       driftMeters: frame.drDisplacementMeters,
       state: frame.state,
@@ -569,6 +1358,7 @@ export function SimulationMapView({
       isInsideTunnel: frame.isInsideTunnel,
       isApproachingTunnel: frame.isApproachingTunnel,
       isPresentation: isPresentationMode,
+      position: [frame.carPosition.latitude, frame.carPosition.longitude],
     };
 
     if (Platform.OS === 'web') {
@@ -592,6 +1382,39 @@ export function SimulationMapView({
 
   const html = useMemo(() => buildSimulationHtml(initialCenter), []);
 
+  const handleMessage = useCallback((eventData: string) => {
+    try {
+      const parsed = typeof eventData === 'string' ? JSON.parse(eventData) : eventData;
+      if (parsed.type === 'ready') {
+        readyRef.current = true;
+        onMapReady?.();
+        pushUpdate();
+      } else if (parsed.type === 'fork_pause') {
+        onForkDecisionPause?.();
+      } else if (parsed.type === 'fork_resume') {
+        onForkDecisionResume?.();
+      }
+    } catch {
+      if (eventData === 'ready') {
+        readyRef.current = true;
+        onMapReady?.();
+        pushUpdate();
+      }
+    }
+  }, [onMapReady, onForkDecisionPause, onForkDecisionResume, pushUpdate]);
+
+  // Web window message listener for iframe bridge
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handleWebMessage = (e: MessageEvent) => {
+        if (!e.data) return;
+        handleMessage(e.data);
+      };
+      window.addEventListener('message', handleWebMessage);
+      return () => window.removeEventListener('message', handleWebMessage);
+    }
+  }, [handleMessage]);
+
   if (Platform.OS === 'web') {
     return (
       <View style={[styles.container, style]}>
@@ -604,6 +1427,10 @@ export function SimulationMapView({
             readyRef.current = true;
             onMapReady?.();
             pushUpdate();
+            if (iframeRef.current?.contentWindow) {
+              iframeRef.current.contentWindow.onForkDecisionPause = onForkDecisionPause;
+              iframeRef.current.contentWindow.onForkDecisionResume = onForkDecisionResume;
+            }
           }}
         />
       </View>
@@ -627,11 +1454,7 @@ export function SimulationMapView({
           pushUpdate();
         }}
         onMessage={(e) => {
-          if (e.nativeEvent.data === 'ready') {
-            readyRef.current = true;
-            onMapReady?.();
-            pushUpdate();
-          }
+          handleMessage(e.nativeEvent.data);
         }}
         onError={() => {}}
         {...(Platform.OS === 'android' ? {
@@ -647,10 +1470,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     overflow: 'hidden',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#050811',
   },
   webview: {
     flex: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#050811',
   },
 });

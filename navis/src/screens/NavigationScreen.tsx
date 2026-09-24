@@ -108,14 +108,24 @@ const statusStyles = StyleSheet.create({
   divider: { width: 1, height: 28, backgroundColor: colors.borderLight },
 });
 
-// Bottom control card — shows mode metrics only (GNSS toggling removed)
+// Bottom control card — shows mode metrics and buttons based on mode
 function ControlCard({
-  mode, gnssData, drState, totalDrivenDistance, onStop,
+  mode,
+  appMode,
+  gnssData,
+  drState,
+  totalDrivenDistance,
+  onDisableGNSS,
+  onEnableGNSS,
+  onStop,
 }: {
   mode: NavigationMode;
+  appMode: 'LIVE' | 'DEMO' | 'IDLE';
   gnssData: any;
   drState: any;
   totalDrivenDistance: number;
+  onDisableGNSS?: () => void;
+  onEnableGNSS?: () => void;
   onStop: () => void;
 }) {
   const isDR = mode === 'DEAD_RECKONING' || mode === 'GNSS_LOST';
@@ -142,7 +152,7 @@ function ControlCard({
       <View style={styles.cardHeader}>
         <View style={{ gap: 2 }}>
           <Text style={styles.cardTitle}>
-            {isDR ? 'TUNNEL / UNDERPASS OUTAGE' : isRecovering ? 'SENSOR FUSION' : isFused ? 'HIGHWAY NAVIGATION' : 'LIVE NAVIGATION'}
+            {isDR ? 'TUNNEL / UNDERPASS OUTAGE' : isRecovering ? 'SENSOR FUSION' : isFused ? 'HIGHWAY NAVIGATION' : 'NAVIGATION SESSION'}
           </Text>
           {isDR && <Text style={styles.cardSubtitle}>Inertial Dead Reckoning Active</Text>}
           {isRecovering && <Text style={styles.cardSubtitle}>Fusing GNSS & INS trajectories…</Text>}
@@ -180,11 +190,42 @@ function ControlCard({
         )}
       </View>
 
-      {/* Stop button */}
-      <TouchableOpacity style={styles.stopFullButton} onPress={onStop}>
-        <Text style={styles.stopFullIcon}>■</Text>
-        <Text style={styles.stopFullText}>STOP SESSION</Text>
-      </TouchableOpacity>
+      {/* DEMO mode action buttons (Disable / Restore GNSS toggle) */}
+      {appMode === 'DEMO' ? (
+        <View style={styles.demoButtonsContainer}>
+          <View style={styles.buttonRow}>
+            {isDR ? (
+              <TouchableOpacity
+                style={[styles.gnssButton, styles.gnssButtonRestore]}
+                onPress={onEnableGNSS}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.gnssButtonIcon}>⚡</Text>
+                <Text style={[styles.gnssButtonText, { color: '#065F46' }]}>RESTORE GNSS</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.gnssButton, styles.gnssButtonDisable]}
+                onPress={onDisableGNSS}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.gnssButtonIcon}>🚫</Text>
+                <Text style={[styles.gnssButtonText, { color: colors.danger }]}>DISABLE GNSS</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity style={styles.stopSmallButton} onPress={onStop} activeOpacity={0.85}>
+              <Text style={styles.stopSmallText}>■ END</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        /* LIVE mode: Stop session button */
+        <TouchableOpacity style={styles.stopFullButton} onPress={onStop} activeOpacity={0.85}>
+          <Text style={styles.stopFullIcon}>■</Text>
+          <Text style={styles.stopFullText}>STOP SESSION</Text>
+        </TouchableOpacity>
+      )}
 
       {isDR && (
         <Text style={styles.drNote}>
@@ -259,6 +300,22 @@ export function NavigationScreen({ navigation, route }: Props) {
 
   const liveSensors = useLiveSensors();
 
+  const handleDisableGNSS = () => {
+    if (appMode === 'DEMO') {
+      demo.manualDisableGNSS();
+    } else {
+      engine.disableGNSS();
+    }
+  };
+
+  const handleEnableGNSS = () => {
+    if (appMode === 'DEMO') {
+      demo.manualEnableGNSS();
+    } else {
+      engine.enableGNSS();
+    }
+  };
+
   const handleStop = () => {
     demo.pause();
     engine.stopNavigation();
@@ -323,9 +380,12 @@ export function NavigationScreen({ navigation, route }: Props) {
       <View style={styles.controlWrapper}>
         <ControlCard
           mode={state.mode}
+          appMode={appMode}
           gnssData={state.gnssData}
           drState={state.deadReckoning}
           totalDrivenDistance={totalDrivenDistance}
+          onDisableGNSS={handleDisableGNSS}
+          onEnableGNSS={handleEnableGNSS}
           onStop={handleStop}
         />
 
@@ -488,6 +548,56 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: colors.borderLight,
+  },
+  demoButtonsContainer: {
+    gap: spacing[2],
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: spacing[3],
+    alignItems: 'center',
+  },
+  gnssButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing[2],
+    paddingVertical: spacing[3],
+    borderRadius: radius.xl,
+  },
+  gnssButtonDisable: {
+    backgroundColor: colors.dangerSurface,
+    borderWidth: 1.5,
+    borderColor: '#FECACA',
+  },
+  gnssButtonRestore: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1.5,
+    borderColor: '#A7F3D0',
+  },
+  gnssButtonIcon: {
+    fontSize: 16,
+  },
+  gnssButtonText: {
+    ...textStyles.labelMedium,
+    fontWeight: fontWeights.bold,
+    letterSpacing: 0.6,
+  },
+  stopSmallButton: {
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    borderRadius: radius.xl,
+    backgroundColor: colors.gray100,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stopSmallText: {
+    ...textStyles.labelSmall,
+    color: colors.textSecondary,
+    fontWeight: fontWeights.bold,
   },
   stopFullButton: {
     flexDirection: 'row',
