@@ -3,27 +3,40 @@
  *
  * Manages the GPS/location subscription.
  *
- * IMPORTANT: The "GNSS enable/disable" toggle here is a SOFTWARE-LEVEL toggle.
- * It does NOT disable the phone's OS location service.
- * It merely controls whether the navigation engine receives GNSS updates.
- *
- * This allows the phone to continue collecting location data while the
- * navigation engine uses dead reckoning.
+ * Movement Detection & Stationary Jitter Filter:
+ * Suppresses GPS drift noise when stationary. Updates location and trajectory
+ * only when actual physical displacement occurs (distance threshold >= 1.5m or speed > 1.2 km/h).
  */
 
 import * as Location from 'expo-location';
-import { GNSSData } from '../types';
+import { GNSSData, LatLng } from '../types';
 import { generateSimulatedGNSS, DEMO_ROUTE } from '../constants/demoRoute';
 
 type GNSSCallback = (data: GNSSData) => void;
 
+function calcDistanceMeters(pos1: LatLng, pos2: LatLng): number {
+  const R = 6371000;
+  const dLat = ((pos2.latitude - pos1.latitude) * Math.PI) / 180;
+  const dLon = ((pos2.longitude - pos1.longitude) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((pos1.latitude * Math.PI) / 180) *
+      Math.cos((pos2.latitude * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export class GNSSManager {
   private subscription: Location.LocationSubscription | null = null;
   private callback: GNSSCallback | null = null;
-  private gnssEnabled: boolean = true;      // Software toggle
+  private gnssEnabled: boolean = true;
   private isSimulated: boolean = false;
   private simulationInterval: ReturnType<typeof setInterval> | null = null;
   private demoIndex: number = 0;
+  private lastPosition: LatLng | null = null;
+  private isMoving: boolean = false;
 
   /**
    * Request location permissions and start listening.
@@ -31,6 +44,7 @@ export class GNSSManager {
    */
   async start(callback: GNSSCallback): Promise<boolean> {
     this.callback = callback;
+    this.lastPosition = null;
 
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -44,15 +58,38 @@ export class GNSSManager {
       this.subscription = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.BestForNavigation,
-          timeInterval: 1000,
-          distanceInterval: 0.5,
+          timeInterval: 800,
+          distanceInterval: 1.0, // Minimum 1.0m movement for OS update
         },
         (location) => {
-          const data: GNSSData = {
+          const speedKmH = (location.coords.speed ?? 0) * 3.6;
+          const currentPos: LatLng = {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
+          };
+
+          // Movement filtering logic
+          let shouldUpdatePosition = false;
+          if (!this.lastPosition) {
+            shouldUpdatePosition = true;
+            this.lastPosition = currentPos;
+          } else {
+            const displacement = calcDistanceMeters(this.lastPosition, currentPos);
+            // Update only if displacement is at least 1.5 meters OR speed indicates movement (> 1.2 km/h)
+            if (displacement >= 1.5 || speedKmH > 1.2) {
+              shouldUpdatePosition = true;
+              this.lastPosition = currentPos;
+              this.isMoving = true;
+            } else {
+              this.isMoving = false;
+            }
+          }
+
+          const data: GNSSData = {
+            latitude: shouldUpdatePosition ? currentPos.latitude : (this.lastPosition?.latitude ?? currentPos.latitude),
+            longitude: shouldUpdatePosition ? currentPos.longitude : (this.lastPosition?.longitude ?? currentPos.longitude),
             altitude: location.coords.altitude ?? 0,
-            speed: (location.coords.speed ?? 0) * 3.6, // m/s → km/h for display
+            speed: this.isMoving ? speedKmH : 0.0,
             heading: location.coords.heading ?? 0,
             accuracy: location.coords.accuracy ?? 99,
             timestamp: location.timestamp,
@@ -115,7 +152,6 @@ export class GNSSManager {
 
   /**
    * Software-disable GNSS input to the navigation engine.
-   * The OS continues collecting location data internally.
    */
   setEnabled(enabled: boolean): void {
     this.gnssEnabled = enabled;
@@ -127,6 +163,10 @@ export class GNSSManager {
 
   isUsingSimulation(): boolean {
     return this.isSimulated;
+  }
+
+  getIsMoving(): boolean {
+    return this.isMoving;
   }
 }
 

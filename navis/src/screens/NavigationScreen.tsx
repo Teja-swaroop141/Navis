@@ -29,6 +29,7 @@ import { DEMO_ROUTE } from '../constants/demoRoute';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { NavigationMode } from '../types';
+import { useLiveSensors } from '../hooks/useLiveSensors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Navigation'>;
 
@@ -107,16 +108,14 @@ const statusStyles = StyleSheet.create({
   divider: { width: 1, height: 28, backgroundColor: colors.borderLight },
 });
 
-// Bottom control card — changes appearance based on navigation mode
+// Bottom control card — shows mode metrics only (GNSS toggling removed)
 function ControlCard({
-  mode, gnssData, drState, totalDrivenDistance, onDisableGNSS, onEnableGNSS, onStop,
+  mode, gnssData, drState, totalDrivenDistance, onStop,
 }: {
   mode: NavigationMode;
   gnssData: any;
   drState: any;
   totalDrivenDistance: number;
-  onDisableGNSS: () => void;
-  onEnableGNSS: () => void;
   onStop: () => void;
 }) {
   const isDR = mode === 'DEAD_RECKONING' || mode === 'GNSS_LOST';
@@ -129,10 +128,10 @@ function ControlCard({
     Animated.spring(slideAnim, { toValue: 1, useNativeDriver: true, tension: 80, friction: 12 }).start();
   }, [mode]);
 
-  const rawSpeed = gnssData?.speed ?? drState?.velocity ?? 16.2;
-  const speed = (rawSpeed * 3.6).toFixed(1); // Converts m/s to km/h directly (e.g. 58.3 km/h)
-  const heading = gnssData?.heading ?? drState?.heading ?? 232;
-  const accuracy = gnssData?.accuracy?.toFixed(1) ?? '1.8';
+  const rawSpeed = gnssData?.speed ?? drState?.velocity ?? 0;
+  const speed = (rawSpeed * 3.6).toFixed(1);
+  const heading = gnssData?.heading ?? drState?.heading ?? 0;
+  const accuracy = gnssData?.accuracy?.toFixed(1) ?? '--';
   const drError = drState?.estimatedError ? drState.estimatedError.toFixed(1) : '0.0';
   const drDuration = drState?.elapsedTime ? formatDuration(drState.elapsedTime) : '00:00';
   const distanceFormatted = formatDistance(totalDrivenDistance);
@@ -143,7 +142,7 @@ function ControlCard({
       <View style={styles.cardHeader}>
         <View style={{ gap: 2 }}>
           <Text style={styles.cardTitle}>
-            {isDR ? 'TUNNEL / UNDERPASS OUTAGE' : isRecovering ? 'SENSOR FUSION' : isFused ? 'HIGHWAY NAVIGATION' : 'EXPRESSWAY NAVIGATION'}
+            {isDR ? 'TUNNEL / UNDERPASS OUTAGE' : isRecovering ? 'SENSOR FUSION' : isFused ? 'HIGHWAY NAVIGATION' : 'LIVE NAVIGATION'}
           </Text>
           {isDR && <Text style={styles.cardSubtitle}>Inertial Dead Reckoning Active</Text>}
           {isRecovering && <Text style={styles.cardSubtitle}>Fusing GNSS & INS trajectories…</Text>}
@@ -181,27 +180,15 @@ function ControlCard({
         )}
       </View>
 
-      {/* Toggle button */}
-      <View style={styles.buttonRow}>
-        {(isDR || isRecovering) ? (
-          <TouchableOpacity style={[styles.gnssButton, styles.gnssRestore]} onPress={onEnableGNSS}>
-            <Text style={styles.gnssRestoreIcon}>◉</Text>
-            <Text style={styles.gnssRestoreText}>Restore GNSS</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={[styles.gnssButton, isFused ? styles.gnssDisableFused : styles.gnssDisable]} onPress={onDisableGNSS}>
-            <Text style={styles.gnssDisableIcon}>⊘</Text>
-            <Text style={styles.gnssDisableText}>Disable GNSS</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity style={styles.stopButton} onPress={onStop}>
-          <Text style={styles.stopText}>■</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Stop button */}
+      <TouchableOpacity style={styles.stopFullButton} onPress={onStop}>
+        <Text style={styles.stopFullIcon}>■</Text>
+        <Text style={styles.stopFullText}>STOP SESSION</Text>
+      </TouchableOpacity>
 
       {isDR && (
         <Text style={styles.drNote}>
-          ℹ️ Vehicle position computed in real-time from vehicle IMU sensors
+          ℹ️ Vehicle position computed in real-time from IMU sensors
         </Text>
       )}
     </Animated.View>
@@ -270,21 +257,7 @@ export function NavigationScreen({ navigation, route }: Props) {
     : state.mode === 'FUSED' ? colors.markerFused
     : colors.markerGNSS;
 
-  const handleDisableGNSS = () => {
-    if (appMode === 'DEMO') {
-      demo.manualDisableGNSS();
-    } else {
-      engine.disableGNSS();
-    }
-  };
-
-  const handleEnableGNSS = () => {
-    if (appMode === 'DEMO') {
-      demo.manualEnableGNSS();
-    } else {
-      engine.enableGNSS();
-    }
-  };
+  const liveSensors = useLiveSensors();
 
   const handleStop = () => {
     demo.pause();
@@ -353,10 +326,41 @@ export function NavigationScreen({ navigation, route }: Props) {
           gnssData={state.gnssData}
           drState={state.deadReckoning}
           totalDrivenDistance={totalDrivenDistance}
-          onDisableGNSS={handleDisableGNSS}
-          onEnableGNSS={handleEnableGNSS}
           onStop={handleStop}
         />
+
+        {/* Live sensor mini-strip (LIVE mode only) */}
+        {appMode === 'LIVE' && liveSensors.imu && (
+          <View style={styles.sensorStrip}>
+            <View style={styles.sensorStripItem}>
+              <Text style={styles.sensorStripLabel}>ACC·X</Text>
+              <Text style={styles.sensorStripValue}>
+                {liveSensors.imu.accelerometer.x.toFixed(2)}
+              </Text>
+            </View>
+            <View style={styles.sensorStripDivider} />
+            <View style={styles.sensorStripItem}>
+              <Text style={styles.sensorStripLabel}>GYRO·Z</Text>
+              <Text style={styles.sensorStripValue}>
+                {liveSensors.imu.gyroscope.z.toFixed(3)}
+              </Text>
+            </View>
+            <View style={styles.sensorStripDivider} />
+            <View style={styles.sensorStripItem}>
+              <Text style={styles.sensorStripLabel}>HDG</Text>
+              <Text style={styles.sensorStripValue}>
+                {liveSensors.imu.heading.toFixed(0)}°
+              </Text>
+            </View>
+            <View style={styles.sensorStripDivider} />
+            <View style={styles.sensorStripItem}>
+              <Text style={styles.sensorStripLabel}>GPS</Text>
+              <Text style={[styles.sensorStripValue, { color: liveSensors.gnss ? colors.gnssActive : colors.gnssLost }]}>
+                {liveSensors.gnss ? 'FIX' : 'WAIT'}
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -485,39 +489,49 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: colors.borderLight,
   },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing[3],
-    alignItems: 'center',
-  },
-  gnssButton: {
-    flex: 1,
+  stopFullButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing[2],
     paddingVertical: spacing[4],
     borderRadius: radius.xl,
-  },
-  gnssDisable: { backgroundColor: colors.gnssLostSurface },
-  gnssDisableFused: { backgroundColor: colors.primarySurface },
-  gnssRestore: { backgroundColor: colors.gnssActiveSurface },
-  gnssDisableIcon: { fontSize: 16, color: colors.gnssLost },
-  gnssDisableText: { ...textStyles.labelLarge, color: colors.gnssLost },
-  gnssRestoreIcon: { fontSize: 16, color: colors.gnssActive },
-  gnssRestoreText: { ...textStyles.labelLarge, color: colors.gnssActive },
-  stopButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
     backgroundColor: colors.dangerSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  stopText: { fontSize: 14, color: colors.danger },
+  stopFullIcon: { fontSize: 14, color: colors.danger },
+  stopFullText: {
+    ...textStyles.labelLarge,
+    color: colors.danger,
+    letterSpacing: 0.6,
+  },
   drNote: {
     ...textStyles.caption,
     color: colors.textTertiary,
     textAlign: 'center',
   },
+  sensorStrip: {
+    flexDirection: 'row',
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[4],
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  sensorStripItem: { alignItems: 'center', gap: 2 },
+  sensorStripLabel: {
+    fontSize: 8,
+    fontWeight: fontWeights.bold,
+    color: colors.textTertiary,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  sensorStripValue: {
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
+    color: colors.textPrimary,
+    letterSpacing: 0.3,
+  },
+  sensorStripDivider: { width: 1, height: 24, backgroundColor: colors.borderLight },
 });

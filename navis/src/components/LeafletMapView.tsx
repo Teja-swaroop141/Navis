@@ -187,9 +187,9 @@ export function LeafletMapView({
   const webRef = useRef<WebView>(null);
   const readyRef = useRef(false);
 
-  const pushUpdate = useCallback(() => {
-    if (!webRef.current || !readyRef.current) return;
+  const iframeRef = useRef<any>(null);
 
+  const pushUpdate = useCallback(() => {
     const payload = {
       gnss: gnssTrajectory.map(c => [c.latitude, c.longitude]),
       dr: drTrajectory.map(c => [c.latitude, c.longitude]),
@@ -201,6 +201,17 @@ export function LeafletMapView({
       color: markerColor,
     };
 
+    if (Platform.OS === 'web') {
+      try {
+        const win = iframeRef.current?.contentWindow;
+        if (win && win.updateMap) {
+          win.updateMap(payload);
+        }
+      } catch (err) {}
+      return;
+    }
+
+    if (!webRef.current || !readyRef.current) return;
     const js = `if (window.updateMap) { window.updateMap(${JSON.stringify(payload)}); } true;`;
     webRef.current.injectJavaScript(js);
   }, [currentPosition, gnssTrajectory, drTrajectory, fusedTrajectory, markerLabel, markerColor]);
@@ -210,6 +221,24 @@ export function LeafletMapView({
   }, [pushUpdate]);
 
   const html = React.useMemo(() => buildHtml(initialCenter), [initialCenter.latitude, initialCenter.longitude]);
+
+  if (Platform.OS === 'web') {
+    return (
+      <View style={[styles.container, style]}>
+        {/* @ts-ignore Web iframe */}
+        <iframe
+          ref={iframeRef}
+          srcDoc={html}
+          style={{ width: '100%', height: '100%', border: 'none' }}
+          onLoad={() => {
+            readyRef.current = true;
+            onMapReady?.();
+            pushUpdate();
+          }}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, style]}>
@@ -245,6 +274,6 @@ export function LeafletMapView({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, overflow: 'hidden' },
+  container: { flex: 1, overflow: 'hidden', backgroundColor: '#f0f2f8' },
   webview: { flex: 1, backgroundColor: '#f0f2f8' },
 });
