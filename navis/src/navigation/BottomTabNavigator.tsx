@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { HomeScreen } from '../screens/HomeScreen';
+import { SimulationScreen } from '../screens/SimulationScreen';
 import { SensorMonitorScreen } from '../screens/SensorMonitorScreen';
 import { DeadReckoningScreen } from '../screens/DeadReckoningScreen';
 import { SensorFusionScreen } from '../screens/SensorFusionScreen';
@@ -69,6 +70,14 @@ export function BottomTabNavigator() {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="🏠" label="Home" />,
+        }}
+      />
+      <Tab.Screen
+        name="SimulationTab"
+        component={SimulationScreen}
+        options={{
+          tabBarLabel: 'Simulation',
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="🚗" label="Simulation" />,
         }}
       />
       <Tab.Screen

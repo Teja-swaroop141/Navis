@@ -8,6 +8,7 @@ import { BottomTabNavigator } from './BottomTabNavigator';
 import { ModeSelectionScreen } from '../screens/ModeSelectionScreen';
 import { NavigationScreen } from '../screens/NavigationScreen';
 import { PerformanceScreen } from '../screens/PerformanceScreen';
+import { SimulationScreen } from '../screens/SimulationScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -29,6 +30,7 @@ export function AppNavigator() {
         options={{ animation: 'slide_from_bottom' }}
       />
       <Stack.Screen name="Performance" component={PerformanceScreen} />
+      <Stack.Screen name="Simulation" component={SimulationScreen} />
     </Stack.Navigator>
   );
 }

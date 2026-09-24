@@ -277,6 +277,29 @@ export function HomeScreen({ navigation }: Props) {
             label="Demonstration Mode"
             onPress={() => navigation.navigate('ModeSelection')}
           />
+          <TouchableOpacity
+            style={styles.simulationBanner}
+            onPress={() => navigation.navigate('Simulation')}
+            activeOpacity={0.88}
+          >
+            <View style={styles.simulationBannerLeft}>
+              <View style={styles.simulationBannerIcon}>
+                <Text style={styles.simulationBannerEmoji}>🚗</Text>
+              </View>
+              <View style={styles.simulationBannerTexts}>
+                <View style={styles.simulationBannerBadgeRow}>
+                  <Text style={styles.simulationBannerTitle}>Tunnel GNSS Outage</Text>
+                  <View style={styles.simPill}>
+                    <Text style={styles.simPillText}>SIMULATION</Text>
+                  </View>
+                </View>
+                <Text style={styles.simulationBannerSubtitle}>
+                  OpenStreetMap road dead reckoning demonstration
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.simulationBannerArrow}>›</Text>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Features */}
@@ -384,6 +407,72 @@ const styles = StyleSheet.create({
   },
 
   ctaSection: { gap: spacing[3] },
+
+  simulationBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FAF5FF',
+    borderRadius: radius.xl,
+    padding: spacing[4],
+    borderWidth: 1.5,
+    borderColor: '#DDD6FE',
+    marginTop: spacing[1],
+    ...shadows.sm,
+  },
+  simulationBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    flex: 1,
+  },
+  simulationBannerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.lg,
+    backgroundColor: '#EDE9FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  simulationBannerEmoji: {
+    fontSize: 20,
+  },
+  simulationBannerTexts: {
+    flex: 1,
+    gap: 2,
+  },
+  simulationBannerBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  simulationBannerTitle: {
+    ...textStyles.labelLarge,
+    color: '#4C1D95',
+    fontWeight: fontWeights.bold,
+  },
+  simPill: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: radius.sm,
+  },
+  simPillText: {
+    fontSize: 8,
+    fontWeight: fontWeights.extrabold,
+    color: colors.surface,
+    letterSpacing: 0.5,
+  },
+  simulationBannerSubtitle: {
+    fontSize: fontSizes.xs,
+    color: '#6D28D9',
+  },
+  simulationBannerArrow: {
+    fontSize: 24,
+    color: '#8B5CF6',
+    fontWeight: '300',
+    marginLeft: spacing[2],
+  },
 
   featuresTitle: {
     ...textStyles.headingSmall,

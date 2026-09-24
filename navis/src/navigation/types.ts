@@ -7,11 +7,14 @@ export type RootStackParamList = {
   ModeSelection: undefined;
   Navigation: { mode: 'LIVE' | 'DEMO' };
   Performance: undefined;
+  Simulation: undefined;
 };
 
 export type BottomTabParamList = {
   HomeTab: undefined;
+  SimulationTab: undefined;
   SensorsTab: undefined;
   AnalysisTab: undefined;
   FusionTab: undefined;
 };
+
