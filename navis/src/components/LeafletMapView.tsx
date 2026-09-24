@@ -98,7 +98,7 @@ function buildHtml(center: LatLng): string {
     var map = L.map('map', {
       zoomControl: false,
       attributionControl: false
-    }).setView([${center.latitude}, ${center.longitude}], 17);
+    }).setView([${center.latitude}, ${center.longitude}], 16);
 
     // Official Free OpenStreetMap Tile Server (No API Key, No Watermark)
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {

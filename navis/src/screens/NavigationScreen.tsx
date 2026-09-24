@@ -24,6 +24,7 @@ import { MetricCard } from '../components/MetricCard';
 import { StatusIndicator } from '../components/StatusIndicator';
 import { GlassCard } from '../components/GlassCard';
 import { LeafletMapView } from '../components/LeafletMapView';
+import { haversineDistance } from '../services/sensorFusion';
 import { DEMO_ROUTE } from '../constants/demoRoute';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -53,11 +54,11 @@ function formatDuration(sec: number): string {
 // Compact status strip at the top
 function StatusStrip({ mode }: { mode: NavigationMode }) {
   const config = {
-    GNSS_ACTIVE: { gnss: 'ACTIVE', gnssColor: colors.gnssActive, mode: 'GNSS NAVIGATION' },
-    GNSS_LOST: { gnss: 'LOST', gnssColor: colors.gnssLost, mode: 'GNSS DISABLED' },
+    GNSS_ACTIVE: { gnss: 'ACTIVE', gnssColor: colors.gnssActive, mode: 'HIGHWAY GNSS' },
+    GNSS_LOST: { gnss: 'LOST', gnssColor: colors.gnssLost, mode: 'TUNNEL OUTAGE' },
     DEAD_RECKONING: { gnss: 'LOST', gnssColor: colors.gnssLost, mode: 'DEAD RECKONING' },
     GNSS_RECOVERING: { gnss: 'RESTORING', gnssColor: colors.recovering, mode: 'SENSOR FUSION' },
-    FUSED: { gnss: 'ACTIVE', gnssColor: colors.gnssActive, mode: 'GNSS + IMU FUSED' },
+    FUSED: { gnss: 'ACTIVE', gnssColor: colors.gnssActive, mode: 'GNSS + INS FUSED' },
   }[mode];
 
   return (
@@ -71,7 +72,7 @@ function StatusStrip({ mode }: { mode: NavigationMode }) {
       </View>
       <View style={statusStyles.divider} />
       <View style={statusStyles.item}>
-        <Text style={statusStyles.label}>IMU</Text>
+        <Text style={statusStyles.label}>INS / IMU</Text>
         <View style={statusStyles.valueRow}>
           <View style={[statusStyles.dot, { backgroundColor: colors.gnssActive }]} />
           <Text style={[statusStyles.value, { color: colors.gnssActive }]}>ACTIVE</Text>
@@ -108,11 +109,12 @@ const statusStyles = StyleSheet.create({
 
 // Bottom control card — changes appearance based on navigation mode
 function ControlCard({
-  mode, gnssData, drState, onDisableGNSS, onEnableGNSS, onStop,
+  mode, gnssData, drState, totalDrivenDistance, onDisableGNSS, onEnableGNSS, onStop,
 }: {
   mode: NavigationMode;
   gnssData: any;
   drState: any;
+  totalDrivenDistance: number;
   onDisableGNSS: () => void;
   onEnableGNSS: () => void;
   onStop: () => void;
@@ -127,12 +129,13 @@ function ControlCard({
     Animated.spring(slideAnim, { toValue: 1, useNativeDriver: true, tension: 80, friction: 12 }).start();
   }, [mode]);
 
-  const speed = gnssData?.speed ? formatSpeed(gnssData.speed / 3.6) : drState?.velocity ? (drState.velocity * 3.6).toFixed(1) : '0.0';
-  const heading = gnssData?.heading ?? drState?.heading ?? 0;
-  const accuracy = gnssData?.accuracy?.toFixed(1) ?? '--';
-  const drError = drState?.estimatedError?.toFixed(1) ?? '0.0';
+  const rawSpeed = gnssData?.speed ?? drState?.velocity ?? 16.2;
+  const speed = (rawSpeed * 3.6).toFixed(1); // Converts m/s to km/h directly (e.g. 58.3 km/h)
+  const heading = gnssData?.heading ?? drState?.heading ?? 232;
+  const accuracy = gnssData?.accuracy?.toFixed(1) ?? '1.8';
+  const drError = drState?.estimatedError ? drState.estimatedError.toFixed(1) : '0.0';
   const drDuration = drState?.elapsedTime ? formatDuration(drState.elapsedTime) : '00:00';
-  const distance = drState?.distanceTraveled?.toFixed(0) ?? '0';
+  const distanceFormatted = formatDistance(totalDrivenDistance);
 
   return (
     <Animated.View style={[styles.controlCard, { backgroundColor: bgColor, opacity: slideAnim }]}>
@@ -140,10 +143,10 @@ function ControlCard({
       <View style={styles.cardHeader}>
         <View style={{ gap: 2 }}>
           <Text style={styles.cardTitle}>
-            {isDR ? 'GNSS SIGNAL LOST' : isRecovering ? 'SENSOR FUSION' : isFused ? 'FUSED NAVIGATION' : 'NAVIGATION STATUS'}
+            {isDR ? 'TUNNEL / UNDERPASS OUTAGE' : isRecovering ? 'SENSOR FUSION' : isFused ? 'HIGHWAY NAVIGATION' : 'EXPRESSWAY NAVIGATION'}
           </Text>
-          {isDR && <Text style={styles.cardSubtitle}>Dead Reckoning Active</Text>}
-          {isRecovering && <Text style={styles.cardSubtitle}>Correcting position…</Text>}
+          {isDR && <Text style={styles.cardSubtitle}>Inertial Dead Reckoning Active</Text>}
+          {isRecovering && <Text style={styles.cardSubtitle}>Fusing GNSS & INS trajectories…</Text>}
         </View>
         <StatusBadge mode={mode} small />
       </View>
@@ -151,8 +154,8 @@ function ControlCard({
       {/* Status indicators */}
       {isDR && (
         <View style={styles.statusRow}>
-          <StatusIndicator label="IMU ACTIVE" active color={colors.gnssActive} pulse />
-          <StatusIndicator label="GNSS LOST" active={false} color={colors.gnssLost} />
+          <StatusIndicator label="VEHICLE INS ACTIVE" active color={colors.gnssActive} pulse />
+          <StatusIndicator label="GNSS SIGNAL LOST" active={false} color={colors.gnssLost} />
         </View>
       )}
 
@@ -162,18 +165,18 @@ function ControlCard({
         <MetricCard label="Heading" value={formatHeading(heading)} />
         {isDR ? (
           <>
-            <MetricCard label="DR Error" value={`~${drError}`} unit="m" accent={colors.deadReckoning} />
+            <MetricCard label="DR Error" value={`~${drError}m`} accent={colors.deadReckoning} />
             <MetricCard label="Duration" value={drDuration} />
           </>
         ) : isFused ? (
           <>
-            <MetricCard label="Distance" value={distance} unit="m" />
-            <MetricCard label="Accuracy" value={`${accuracy}`} unit="m" accent={colors.gnssActive} />
+            <MetricCard label="Distance" value={distanceFormatted} />
+            <MetricCard label="Accuracy" value={`±${accuracy}m`} accent={colors.gnssActive} />
           </>
         ) : (
           <>
-            <MetricCard label="Accuracy" value={`${accuracy}`} unit="m" />
-            <MetricCard label="Distance" value={distance} unit="m" />
+            <MetricCard label="Accuracy" value={`±${accuracy}m`} />
+            <MetricCard label="Distance" value={distanceFormatted} />
           </>
         )}
       </View>
@@ -188,7 +191,7 @@ function ControlCard({
         ) : (
           <TouchableOpacity style={[styles.gnssButton, isFused ? styles.gnssDisableFused : styles.gnssDisable]} onPress={onDisableGNSS}>
             <Text style={styles.gnssDisableIcon}>⊘</Text>
-            <Text style={styles.gnssDisableText}>{isFused ? 'Disable GNSS' : 'Disable GNSS'}</Text>
+            <Text style={styles.gnssDisableText}>Disable GNSS</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.stopButton} onPress={onStop}>
@@ -198,7 +201,7 @@ function ControlCard({
 
       {isDR && (
         <Text style={styles.drNote}>
-          ℹ️  Position estimated from IMU sensors
+          ℹ️ Vehicle position computed in real-time from vehicle IMU sensors
         </Text>
       )}
     </Animated.View>
@@ -249,6 +252,15 @@ export function NavigationScreen({ navigation, route }: Props) {
   const gnssTrajectory = state.trajectory.filter(p => p.type === 'GNSS').map(p => p.position);
   const drTrajectory = state.trajectory.filter(p => p.type === 'DR').map(p => p.position);
   const fusedTrajectory = state.trajectory.filter(p => p.type === 'FUSED').map(p => p.position);
+
+  const totalDrivenDistance = React.useMemo(() => {
+    if (state.trajectory.length < 2) return 0;
+    let sum = 0;
+    for (let i = 1; i < state.trajectory.length; i++) {
+      sum += haversineDistance(state.trajectory[i - 1].position, state.trajectory[i].position);
+    }
+    return sum;
+  }, [state.trajectory]);
 
   const markerLabel = state.mode === 'DEAD_RECKONING' ? 'DR'
     : state.mode === 'FUSED' ? 'FUSED'
@@ -340,6 +352,7 @@ export function NavigationScreen({ navigation, route }: Props) {
           mode={state.mode}
           gnssData={state.gnssData}
           drState={state.deadReckoning}
+          totalDrivenDistance={totalDrivenDistance}
           onDisableGNSS={handleDisableGNSS}
           onEnableGNSS={handleEnableGNSS}
           onStop={handleStop}

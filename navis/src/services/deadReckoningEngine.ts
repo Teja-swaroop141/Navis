@@ -221,24 +221,16 @@ export class DeadReckoningEngine {
   }
 
   /**
-   * Manually advance position (used in demo/simulation mode).
-   * Simulates a step with given heading and step length.
+   * Set simulated state directly (used during realistic demo road simulations).
    */
-  simulateStep(heading: number, stepLength: number = STEP_LENGTH_M): void {
-    const headingRad = (heading * Math.PI) / 180;
-    const distDeg = stepLength / 111320;
-
-    const dLat = distDeg * Math.cos(headingRad);
-    const dLon = distDeg * Math.sin(headingRad) / Math.cos((this.state.position.latitude * Math.PI) / 180);
-
-    this.state.position = {
-      latitude: this.state.position.latitude + dLat,
-      longitude: this.state.position.longitude + dLon,
-    };
+  setManualState(position: LatLng, heading: number, velocity: number, stepCount: number, estimatedError: number): void {
+    this.state.position = { ...position };
     this.state.heading = heading;
-    this.state.distanceTraveled += stepLength;
-    this.state.stepCount++;
-    this.state.cumulativeError += stepLength * ERROR_GROWTH_RATE;
+    this.state.velocity = velocity;
+    this.state.stepCount = stepCount;
+    this.state.distanceTraveled = stepCount * STEP_LENGTH_M;
+    this.state.cumulativeError = estimatedError;
+    this.isActive = true;
   }
 }
 

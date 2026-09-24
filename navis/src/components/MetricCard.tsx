@@ -19,9 +19,11 @@ interface MetricCardProps {
 export function MetricCard({ label, value, unit, accent, small = false }: MetricCardProps) {
   return (
     <View style={[styles.container, small && styles.small]}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label} numberOfLines={1} ellipsizeMode="tail">
+        {label}
+      </Text>
       <View style={styles.valueRow}>
-        <Text style={[styles.value, accent ? { color: accent } : {}]}>
+        <Text style={[styles.value, accent ? { color: accent } : {}]} numberOfLines={1}>
           {value}
         </Text>
         {unit && <Text style={styles.unit}>{unit}</Text>}
@@ -32,28 +34,36 @@ export function MetricCard({ label, value, unit, accent, small = false }: Metric
 
 const styles = StyleSheet.create({
   container: {
-    gap: spacing[1],
+    flex: 1,
+    minWidth: 68,
+    gap: 2,
+    alignItems: 'center',
   },
-  small: {},
+  small: {
+    minWidth: 54,
+  },
   label: {
-    ...textStyles.labelSmall,
+    fontSize: 9,
+    fontWeight: fontWeights.bold,
     color: colors.textTertiary,
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
+    textAlign: 'center',
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: spacing[1],
+    gap: 3,
   },
   value: {
-    fontSize: fontSizes.xl,
+    fontSize: fontSizes.lg,
     fontWeight: fontWeights.bold,
     color: colors.textPrimary,
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
   unit: {
-    ...textStyles.bodySmall,
+    fontSize: 10,
+    fontWeight: fontWeights.semibold,
     color: colors.textTertiary,
   },
 });

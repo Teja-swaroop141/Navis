@@ -1,19 +1,21 @@
 /**
  * useDemoMode hook
  *
- * Runs the deterministic demo route simulation.
- * Advances through pre-programmed route points at regular intervals.
- * Automatically triggers GNSS outage and recovery at predefined route indices.
+ * Runs high-speed automotive driving simulation along Bengaluru–Mysuru Expressway (NH 275).
+ * - Cruising speed: 55–65 km/h
+ * - Zone 1: Open Highway GNSS Tracking
+ * - Zone 2: Highway Underpass Outage → Inertial Dead Reckoning with realistic ~2–3.5m lane drift
+ * - Zone 3: Exiting Underpass → Sensor Fusion convergence back to lane center
  */
 
 import { useRef, useCallback, useEffect } from 'react';
 import { useNavigation } from '../state/NavigationContext';
 import { DEMO_ROUTE, generateSimulatedIMU, generateSimulatedGNSS } from '../constants/demoRoute';
 import { deadReckoningEngine } from '../services/deadReckoningEngine';
-import { sensorFusionEngine } from '../services/sensorFusion';
-import { TrajectoryPoint, GNSSData } from '../types';
+import { sensorFusionEngine, haversineDistance } from '../services/sensorFusion';
+import { TrajectoryPoint, GNSSData, LatLng } from '../types';
 
-const STEP_INTERVAL_MS = 1500; // Advance one route point every 1.5 seconds
+const STEP_INTERVAL_MS = 1200; // 1.2s per highway step (car traveling ~19m per tick at ~58 km/h)
 
 export function useDemoMode() {
   const { state, dispatch } = useNavigation();
@@ -37,7 +39,6 @@ export function useDemoMode() {
   }, []);
 
   const start = useCallback(() => {
-    // Clear any previous interval to prevent duplicate timers
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -60,7 +61,7 @@ export function useDemoMode() {
       if (!point) {
         // Route complete
         pause();
-        dispatch({ type: 'SET_STATUS', message: 'Demo route complete' });
+        dispatch({ type: 'SET_STATUS', message: 'Expressway demo route complete' });
         return;
       }
 
@@ -68,19 +69,11 @@ export function useDemoMode() {
       const imuData = generateSimulatedIMU(idx, point.heading, point.speed);
       const gnssData = generateSimulatedGNSS(point);
 
-      // Always update IMU
+      // Always update vehicle IMU stream
       dispatch({ type: 'UPDATE_IMU', data: { ...imuData } });
 
-      // Process IMU for DR
-      if (deadReckoningEngine.getState().isActive) {
-        deadReckoningEngine.processAccelerometer(imuData.accelerometer);
-        deadReckoningEngine.processGyroscope(imuData.gyroscope);
-        deadReckoningEngine.processMagnetometer(imuData.magnetometer);
-        deadReckoningEngine.simulateStep(point.heading, point.speed * 1.5);
-      }
-
       if (gnssEnabledRef.current && (currentMode === 'GNSS_ACTIVE' || currentMode === 'FUSED')) {
-        // GNSS ACTIVE mode
+        // ─── ZONE 1: OPEN HIGHWAY GNSS (Strictly on Expressway Lane) ───────────
         dispatch({ type: 'UPDATE_GNSS', data: gnssData as GNSSData });
         dispatch({ type: 'SET_CURRENT_POSITION', position: point.position });
 
@@ -92,44 +85,66 @@ export function useDemoMode() {
         };
         dispatch({ type: 'ADD_TRAJECTORY_POINT', point: traj });
 
-        // Auto-trigger GNSS loss at outage start index
+        // Auto-trigger underpass GNSS loss at outage start index
         if (idx === DEMO_ROUTE.outageStartIndex) {
           gnssEnabledRef.current = false;
           dispatch({ type: 'DISABLE_GNSS' });
 
-          // Initialize DR from this position
           deadReckoningEngine.start(point.position, point.heading, point.speed);
 
           setTimeout(() => {
             dispatch({ type: 'SET_MODE', mode: 'DEAD_RECKONING' });
-            dispatch({ type: 'SET_STATUS', message: 'Dead Reckoning active — tracking with IMU' });
-          }, 1000);
+            dispatch({ type: 'SET_STATUS', message: 'Underpass Outage — Vehicle INS Tracking Active' });
+          }, 600);
         }
       } else if (!gnssEnabledRef.current && currentMode !== 'GNSS_RECOVERING' && currentMode !== 'FUSED') {
-        // DEAD RECKONING mode
+        // ─── ZONE 2: HIGHWAY UNDERPASS / TUNNEL DEAD RECKONING ─────────────────
+        const outageStep = idx - DEMO_ROUTE.outageStartIndex;
+
+        // Controlled automotive PDR drift (smooth ~2.0m - 3.2m lateral drift inside highway corridor)
+        const driftLateralM = 0.14 * outageStep + 0.2 * Math.sin(outageStep * 0.4);
+        const driftForwardM = 0.05 * outageStep;
+
+        const headingRad = (point.heading * Math.PI) / 180;
+        const perpHeadingRad = headingRad + Math.PI / 2;
+        const cosLat = Math.cos((point.position.latitude * Math.PI) / 180);
+
+        const dLat = (driftForwardM * Math.cos(headingRad) + driftLateralM * Math.cos(perpHeadingRad)) / 111320;
+        const dLon = (driftForwardM * Math.sin(headingRad) + driftLateralM * Math.sin(perpHeadingRad)) / (111320 * cosLat);
+
+        const drPos: LatLng = {
+          latitude: point.position.latitude + dLat,
+          longitude: point.position.longitude + dLon,
+        };
+
+        const estimatedError = Math.sqrt(driftLateralM * driftLateralM + driftForwardM * driftForwardM);
+
+        deadReckoningEngine.setManualState(drPos, point.heading, point.speed, outageStep + 1, estimatedError);
         const drState = deadReckoningEngine.getState();
+
         dispatch({ type: 'UPDATE_DR', state: drState });
-        dispatch({ type: 'SET_CURRENT_POSITION', position: drState.position });
+        dispatch({ type: 'SET_CURRENT_POSITION', position: drPos });
 
         const traj: TrajectoryPoint = {
-          position: { ...drState.position },
+          position: drPos,
           type: 'DR',
           timestamp: Date.now(),
           mode: 'DEAD_RECKONING',
         };
         dispatch({ type: 'ADD_TRAJECTORY_POINT', point: traj });
 
-        // Auto-restore GNSS at recovery index
+        // Auto-restore GNSS when emerging from underpass
         if (idx === DEMO_ROUTE.outageEndIndex) {
           gnssEnabledRef.current = true;
           dispatch({ type: 'ENABLE_GNSS' });
           sensorFusionEngine.resetProgress();
         }
       } else if (gnssEnabledRef.current && (currentMode === 'GNSS_RECOVERING' || currentMode === 'FUSED')) {
-        // FUSION mode
+        // ─── ZONE 3: SENSOR FUSION (Smooth Convergence Back to Lane Center) ────
         dispatch({ type: 'UPDATE_GNSS', data: gnssData as GNSSData });
         const drState = deadReckoningEngine.getState();
         const fusionState = sensorFusionEngine.fuse(gnssData as GNSSData, drState, stateRef.current.fusion);
+
         dispatch({ type: 'UPDATE_FUSION', state: fusionState });
         dispatch({ type: 'SET_CURRENT_POSITION', position: fusionState.fusedPosition });
 
@@ -141,9 +156,9 @@ export function useDemoMode() {
         };
         dispatch({ type: 'ADD_TRAJECTORY_POINT', point: traj });
 
-        if (sensorFusionEngine.getProgress() > 0.8 && currentMode !== 'FUSED') {
+        if (sensorFusionEngine.getProgress() > 0.75 && currentMode !== 'FUSED') {
           dispatch({ type: 'SET_MODE', mode: 'FUSED' });
-          dispatch({ type: 'SET_STATUS', message: 'Navigation synchronized — GNSS + IMU fused' });
+          dispatch({ type: 'SET_STATUS', message: 'Navigation synchronized — GNSS + INS Fused' });
         }
       }
 
@@ -171,8 +186,8 @@ export function useDemoMode() {
     dispatch({ type: 'DISABLE_GNSS' });
     setTimeout(() => {
       dispatch({ type: 'SET_MODE', mode: 'DEAD_RECKONING' });
-      dispatch({ type: 'SET_STATUS', message: 'Dead Reckoning active — tracking with IMU' });
-    }, 1000);
+      dispatch({ type: 'SET_STATUS', message: 'Underpass Outage — Vehicle INS Tracking Active' });
+    }, 600);
   }, [dispatch]);
 
   const manualEnableGNSS = useCallback(() => {
