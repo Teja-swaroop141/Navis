@@ -13,10 +13,10 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors } from '../theme/colors';
 import { fontSizes, fontWeights, textStyles } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
-import { SimulationState, SpeedMultiplier } from '../services/simulationEngine';
+import { SpeedMultiplier } from '../services/simulationEngine';
 
 interface SimulationControlsProps {
-  state: SimulationState;
+  state: string;
   isPaused: boolean;
   speedMultiplier: SpeedMultiplier;
   isPresentationMode: boolean;

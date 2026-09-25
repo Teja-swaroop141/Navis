@@ -8,6 +8,8 @@ export type RootStackParamList = {
   Navigation: { mode: 'LIVE' | 'DEMO' };
   Performance: undefined;
   Simulation: undefined;
+  UrbanCanyon: undefined;
+  ScenarioSelect: undefined;
 };
 
 export type BottomTabParamList = {

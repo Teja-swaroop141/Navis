@@ -300,6 +300,29 @@ export function HomeScreen({ navigation }: Props) {
             </View>
             <Text style={styles.simulationBannerArrow}>›</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.simulationBanner, styles.canyonBanner]}
+            onPress={() => navigation.navigate('UrbanCanyon')}
+            activeOpacity={0.88}
+          >
+            <View style={styles.simulationBannerLeft}>
+              <View style={[styles.simulationBannerIcon, styles.canyonBannerIcon]}>
+                <Text style={styles.simulationBannerEmoji}>🏙️</Text>
+              </View>
+              <View style={styles.simulationBannerTexts}>
+                <View style={styles.simulationBannerBadgeRow}>
+                  <Text style={[styles.simulationBannerTitle, styles.canyonBannerTitle]}>Urban Canyon GNSS</Text>
+                  <View style={[styles.simPill, styles.canyonPill]}>
+                    <Text style={styles.simPillText}>DEGRADED</Text>
+                  </View>
+                </View>
+                <Text style={[styles.simulationBannerSubtitle, styles.canyonBannerSubtitle]}>
+                  Multipath noise with NAVIS inertial estimation
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.simulationBannerArrow, styles.canyonBannerArrow]}>›</Text>
+          </TouchableOpacity>
         </Animated.View>
 
         {/* Features */}
@@ -472,6 +495,25 @@ const styles = StyleSheet.create({
     color: '#8B5CF6',
     fontWeight: '300',
     marginLeft: spacing[2],
+  },
+  canyonBanner: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#C7D2FE',
+  },
+  canyonBannerIcon: {
+    backgroundColor: '#E0E7FF',
+  },
+  canyonBannerTitle: {
+    color: '#312E81',
+  },
+  canyonPill: {
+    backgroundColor: '#4F46E5',
+  },
+  canyonBannerSubtitle: {
+    color: '#4338CA',
+  },
+  canyonBannerArrow: {
+    color: '#4F46E5',
   },
 
   featuresTitle: {
