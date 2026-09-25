@@ -9,6 +9,8 @@ import { ModeSelectionScreen } from '../screens/ModeSelectionScreen';
 import { NavigationScreen } from '../screens/NavigationScreen';
 import { PerformanceScreen } from '../screens/PerformanceScreen';
 import { SimulationScreen } from '../screens/SimulationScreen';
+import { ScenariosScreen } from '../screens/ScenariosScreen';
+import { SensorFailureScenarioScreen } from '../screens/SensorFailureScenarioScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -31,6 +33,8 @@ export function AppNavigator() {
       />
       <Stack.Screen name="Performance" component={PerformanceScreen} />
       <Stack.Screen name="Simulation" component={SimulationScreen} />
+      <Stack.Screen name="Scenarios" component={ScenariosScreen} />
+      <Stack.Screen name="SensorFailureScenario" component={SensorFailureScenarioScreen} />
     </Stack.Navigator>
   );
 }

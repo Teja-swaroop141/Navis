@@ -13,6 +13,7 @@ import {
   View, Text, StyleSheet, Animated, TouchableOpacity, ScrollView,
   Dimensions, StatusBar, Platform,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { textStyles, fontSizes, fontWeights } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
@@ -200,7 +201,7 @@ function ControlCard({
                 onPress={onEnableGNSS}
                 activeOpacity={0.85}
               >
-                <Text style={styles.gnssButtonIcon}>⚡</Text>
+                <Feather name="zap" size={14} color="#065F46" />
                 <Text style={[styles.gnssButtonText, { color: '#065F46' }]}>RESTORE GNSS</Text>
               </TouchableOpacity>
             ) : (
@@ -209,28 +210,32 @@ function ControlCard({
                 onPress={onDisableGNSS}
                 activeOpacity={0.85}
               >
-                <Text style={styles.gnssButtonIcon}>🚫</Text>
+                <Feather name="wifi-off" size={14} color={colors.danger} />
                 <Text style={[styles.gnssButtonText, { color: colors.danger }]}>DISABLE GNSS</Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity style={styles.stopSmallButton} onPress={onStop} activeOpacity={0.85}>
-              <Text style={styles.stopSmallText}>■ END</Text>
+              <Feather name="square" size={10} color={colors.textSecondary} />
+              <Text style={styles.stopSmallText}>END</Text>
             </TouchableOpacity>
           </View>
         </View>
       ) : (
         /* LIVE mode: Stop session button */
         <TouchableOpacity style={styles.stopFullButton} onPress={onStop} activeOpacity={0.85}>
-          <Text style={styles.stopFullIcon}>■</Text>
+          <Feather name="square" size={14} color={colors.danger} />
           <Text style={styles.stopFullText}>STOP SESSION</Text>
         </TouchableOpacity>
       )}
 
       {isDR && (
-        <Text style={styles.drNote}>
-          ℹ️ Vehicle position computed in real-time from IMU sensors
-        </Text>
+        <View style={styles.drNoteRow}>
+          <Feather name="info" size={12} color={colors.primary} />
+          <Text style={styles.drNote}>
+            Vehicle position computed in real-time from IMU sensors
+          </Text>
+        </View>
       )}
     </Animated.View>
   );
@@ -614,10 +619,15 @@ const styles = StyleSheet.create({
     color: colors.danger,
     letterSpacing: 0.6,
   },
+  drNoteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
   drNote: {
     ...textStyles.caption,
     color: colors.textTertiary,
-    textAlign: 'center',
   },
   sensorStrip: {
     flexDirection: 'row',

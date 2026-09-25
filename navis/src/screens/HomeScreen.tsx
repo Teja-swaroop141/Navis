@@ -10,6 +10,7 @@ import {
   View, Text, ScrollView, StyleSheet, Animated, TouchableOpacity,
   Dimensions, StatusBar,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { textStyles, fontWeights, fontSizes } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
@@ -198,19 +199,19 @@ const mapStyles = StyleSheet.create({
 // Feature items
 const features = [
   {
-    icon: '📡',
+    icon: 'radio',
     title: 'GNSS Resilience',
     desc: 'Continue navigation during signal loss.',
     color: colors.primarySurface,
   },
   {
-    icon: '🔗',
+    icon: 'link',
     title: 'Smart Sensor Fusion',
     desc: 'Combine GNSS and smartphone IMU data.',
     color: colors.secondarySurface,
   },
   {
-    icon: '🗺️',
+    icon: 'map-pin',
     title: 'Real-Time Positioning',
     desc: 'Track movement continuously.',
     color: '#F0FDF4',
@@ -240,7 +241,7 @@ export function HomeScreen({ navigation }: Props) {
         <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={styles.logoRow}>
             <View style={styles.logoCircle}>
-              <Text style={styles.logoIcon}>◈</Text>
+              <Feather name="navigation" size={18} color={colors.surface} />
             </View>
             <Text style={styles.logoText}>NAVIS</Text>
           </View>
@@ -284,7 +285,7 @@ export function HomeScreen({ navigation }: Props) {
           >
             <View style={styles.simulationBannerLeft}>
               <View style={styles.simulationBannerIcon}>
-                <Text style={styles.simulationBannerEmoji}>🚗</Text>
+                <Feather name="play-circle" size={20} color={colors.primary} />
               </View>
               <View style={styles.simulationBannerTexts}>
                 <View style={styles.simulationBannerBadgeRow}>
@@ -298,7 +299,31 @@ export function HomeScreen({ navigation }: Props) {
                 </Text>
               </View>
             </View>
-            <Text style={styles.simulationBannerArrow}>›</Text>
+            <Feather name="chevron-right" size={20} color="#8B5CF6" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.simulationBanner}
+            onPress={() => navigation.navigate('Scenarios')}
+            activeOpacity={0.88}
+          >
+            <View style={styles.simulationBannerLeft}>
+              <View style={[styles.simulationBannerIcon, { backgroundColor: colors.lavender }]}>
+                <Feather name="activity" size={20} color={colors.primary} />
+              </View>
+              <View style={styles.simulationBannerTexts}>
+                <View style={styles.simulationBannerBadgeRow}>
+                  <Text style={styles.simulationBannerTitle}>Sensor Failure Scenarios</Text>
+                  <View style={[styles.simPill, { backgroundColor: colors.primarySurface }]}>
+                    <Text style={[styles.simPillText, { color: colors.primaryDark }]}>SCENARIOS</Text>
+                  </View>
+                </View>
+                <Text style={styles.simulationBannerSubtitle}>
+                  Adaptive dead reckoning under IMU sensor dropouts
+                </Text>
+              </View>
+            </View>
+            <Feather name="chevron-right" size={20} color="#8B5CF6" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -308,7 +333,7 @@ export function HomeScreen({ navigation }: Props) {
           {features.map((f) => (
             <View key={f.title} style={[styles.featureCard, { backgroundColor: f.color }]}>
               <View style={styles.featureIcon}>
-                <Text style={styles.featureEmoji}>{f.icon}</Text>
+                <Feather name={f.icon as any} size={22} color={colors.primary} />
               </View>
               <View style={styles.featureText}>
                 <Text style={styles.featureTitle}>{f.title}</Text>

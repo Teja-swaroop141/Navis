@@ -6,6 +6,7 @@ import React, { useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, Animated, StatusBar, Dimensions,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { textStyles, fontSizes, fontWeights } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
@@ -26,7 +27,7 @@ interface StatCardProps {
   value: string;
   unit?: string;
   color?: string;
-  icon?: string;
+  icon?: keyof typeof Feather.glyphMap;
   delay?: number;
 }
 
@@ -43,7 +44,7 @@ function StatCard({ label, value, unit, color = colors.primary, icon, delay = 0 
 
   return (
     <Animated.View style={[statStyles.card, { opacity: fade, transform: [{ translateY: slide }] }]}>
-      {icon && <Text style={statStyles.icon}>{icon}</Text>}
+      {icon && <Feather name={icon} size={22} color={color} style={statStyles.iconEl as any} />}
       <Text style={[statStyles.value, { color }]}>{value}</Text>
       {unit && <Text style={statStyles.unit}>{unit}</Text>}
       <Text style={statStyles.label}>{label}</Text>
@@ -64,6 +65,7 @@ const statStyles = StyleSheet.create({
     ...shadows.sm,
   },
   icon: { fontSize: 24, marginBottom: 4 },
+  iconEl: { marginBottom: 4 },
   value: {
     fontSize: fontSizes['2xl'],
     fontWeight: fontWeights.bold,
@@ -135,7 +137,7 @@ export function PerformanceScreen({ navigation }: Props) {
         <Animated.View style={[styles.header, { opacity: headerFade }]}>
           <View style={styles.headerTop}>
             <View style={styles.successBadge}>
-              <Text style={styles.successIcon}>✓</Text>
+              <Feather name="check-circle" size={18} color={colors.gnssActive} />
             </View>
             <View style={styles.headerText}>
               <Text style={styles.headerTitle}>Navigation Performance</Text>
@@ -147,7 +149,7 @@ export function PerformanceScreen({ navigation }: Props) {
         {/* Stats grid */}
         <View style={styles.statsGrid}>
           <StatCard
-            icon="📡"
+            icon="radio"
             label="GNSS Outage Duration"
             value={formatSec(metrics.outageDuration)}
             unit="sec"
@@ -155,7 +157,7 @@ export function PerformanceScreen({ navigation }: Props) {
             delay={0}
           />
           <StatCard
-            icon="📏"
+            icon="map"
             label="Distance Covered"
             value={formatM(metrics.totalDistance)}
             unit="m"
@@ -163,7 +165,7 @@ export function PerformanceScreen({ navigation }: Props) {
             delay={80}
           />
           <StatCard
-            icon="⚠️"
+            icon="alert-triangle"
             label="Max DR Error"
             value={formatM(metrics.maxDRError)}
             unit="m"
@@ -171,7 +173,7 @@ export function PerformanceScreen({ navigation }: Props) {
             delay={160}
           />
           <StatCard
-            icon="🎯"
+            icon="target"
             label="Final Position Error"
             value={formatM(metrics.finalPositionError)}
             unit="m"
@@ -179,7 +181,7 @@ export function PerformanceScreen({ navigation }: Props) {
             delay={240}
           />
           <StatCard
-            icon="⚡"
+            icon="zap"
             label="Recovery Time"
             value={formatM(metrics.recoveryTime)}
             unit="sec"
@@ -187,7 +189,7 @@ export function PerformanceScreen({ navigation }: Props) {
             delay={320}
           />
           <StatCard
-            icon="📊"
+            icon="bar-chart-2"
             label="Sensor Update Rate"
             value={`${metrics.sensorUpdateRate}`}
             unit="Hz"

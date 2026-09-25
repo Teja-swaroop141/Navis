@@ -93,28 +93,48 @@ function buildHtml(center: LatLng): string {
   </style>
 </head>
 <body>
-  <div id="map"></div>
+  <div id="map" style="position: relative; width: 100%; height: 100%;">
+    <!-- Instant OpenStreetMap SVG Map Fallback -->
+    <svg id="svg-map-fallback" viewBox="0 0 400 400" style="position: absolute; top:0; left:0; width:100%; height:100%; background: #f1f5f9; z-index: 1;">
+      <rect x="0" y="0" width="400" height="400" fill="#f1f5f9"/>
+      <!-- City Blocks -->
+      <rect x="20" y="20" width="160" height="120" fill="#e2e8f0" rx="8"/>
+      <rect x="210" y="20" width="170" height="90" fill="#fbcfe8" opacity="0.65" rx="8"/>
+      <text x="235" y="65" font-size="14" font-family="sans-serif" font-weight="bold" fill="#be185d">Korea Town</text>
+
+      <rect x="20" y="170" width="140" height="210" fill="#e2e8f0" rx="8"/>
+      <rect x="190" y="170" width="190" height="210" fill="#dcfce7" opacity="0.75" rx="8"/>
+      <text x="230" y="270" font-size="13" font-family="sans-serif" font-weight="bold" fill="#15803d">City Park</text>
+
+      <!-- Road Grid -->
+      <path d="M 0 150 L 400 150" stroke="#ffffff" stroke-width="26"/>
+      <path d="M 0 150 L 400 150" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6,6"/>
+      <text x="170" y="144" font-size="12" font-family="sans-serif" font-weight="bold" fill="#334155">31st Street</text>
+
+      <path d="M 170 0 L 170 400" stroke="#ffffff" stroke-width="26"/>
+      <text x="176" y="290" font-size="12" font-family="sans-serif" font-weight="bold" fill="#2563eb" transform="rotate(90, 176, 290)">33rd Street</text>
+
+      <!-- Route Polyline -->
+      <path id="svg-route-path" d="M 40 370 L 170 150 L 360 40" stroke="#4F46E5" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+      <!-- Car Marker -->
+      <g id="svg-marker-group" transform="translate(170, 150)">
+        <circle r="16" fill="#4F46E5" opacity="0.3"/>
+        <circle r="10" fill="#4F46E5" stroke="#ffffff" stroke-width="3"/>
+        <text x="0" y="3.5" font-size="9" font-family="sans-serif" font-weight="bold" fill="#ffffff" text-anchor="middle">GNSS</text>
+      </g>
+    </svg>
+
+    <div id="leaflet-map-div" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 2;"></div>
+  </div>
+
   <script>
-    var map = L.map('map', {
-      zoomControl: false,
-      attributionControl: false
-    }).setView([${center.latitude}, ${center.longitude}], 16);
-
-    // Official Free OpenStreetMap Tile Server (No API Key, No Watermark)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Trajectory polylines
-    var gnssLine = L.polyline([], { color: '#4F46E5', weight: 4, opacity: 0.95 }).addTo(map);
-    var drLine   = L.polyline([], { color: '#F59E0B', weight: 3.5, opacity: 0.9, dashArray: '8, 6' }).addTo(map);
-    var fusedLine= L.polyline([], { color: '#10B981', weight: 4, opacity: 0.95 }).addTo(map);
-
-    // Position marker state
+    var map = null;
     var marker = null;
-    var currentLabel = '';
-    var currentColor = '';
+    var gnssLine = null, drLine = null, fusedLine = null;
+    var currentLabel = '', currentColor = '';
+    var pendingData = null;
+    var attempts = 0;
 
     function makeIcon(label, color) {
       return L.divIcon({
@@ -125,8 +145,57 @@ function buildHtml(center: LatLng): string {
       });
     }
 
+    function initMap() {
+      if (map) return;
+      if (typeof L === 'undefined') {
+        attempts++;
+        if (attempts < 50) {
+          setTimeout(initMap, 120);
+        }
+        return;
+      }
+
+      var mapContainer = document.getElementById('leaflet-map-div');
+      if (!mapContainer) return;
+
+      try {
+        map = L.map('leaflet-map-div', {
+          zoomControl: false,
+          attributionControl: false
+        }).setView([${center.latitude}, ${center.longitude}], 16);
+
+        // 100% Free Official OpenStreetMap Tile Server (No API Key Required)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          subdomains: ['a', 'b', 'c'],
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        gnssLine  = L.polyline([], { color: '#4F46E5', weight: 4.5, opacity: 0.95 }).addTo(map);
+        drLine    = L.polyline([], { color: '#F59E0B', weight: 4, opacity: 0.9, dashArray: '8, 6' }).addTo(map);
+        fusedLine = L.polyline([], { color: '#10B981', weight: 4.5, opacity: 0.95 }).addTo(map);
+
+        setTimeout(function() { if (map) map.invalidateSize(); }, 300);
+        setTimeout(function() { if (map) map.invalidateSize(); }, 1000);
+
+        if (pendingData) {
+          updateMap(pendingData);
+        }
+
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage('ready');
+        }
+      } catch (e) {
+        console.error('Leaflet init error:', e);
+      }
+    }
+
     function updateMap(data) {
       if (!data) return;
+      pendingData = data;
+
+      if (!map) return;
+
       if (data.gnss) gnssLine.setLatLngs(data.gnss);
       if (data.dr) drLine.setLatLngs(data.dr);
       if (data.fused) fusedLine.setLatLngs(data.fused);
@@ -142,7 +211,6 @@ function buildHtml(center: LatLng): string {
           marker = L.marker(latlng, { icon: makeIcon(label, color) }).addTo(map);
         } else {
           marker.setLatLng(latlng);
-          // Only re-create icon if mode/color changed (prevents DOM recreation and flickering)
           if (label !== currentLabel || color !== currentColor) {
             currentLabel = label;
             currentColor = color;
@@ -162,12 +230,12 @@ function buildHtml(center: LatLng): string {
       try { updateMap(JSON.parse(e.data)); } catch(err) {}
     });
 
-    setTimeout(function() {
-      map.invalidateSize();
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage('ready');
-      }
-    }, 200);
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initMap();
+    } else {
+      document.addEventListener('DOMContentLoaded', initMap);
+    }
+    setTimeout(initMap, 200);
   </script>
 </body>
 </html>`;

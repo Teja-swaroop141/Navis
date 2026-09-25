@@ -150,3 +150,15 @@ export interface SensorHealth {
   magnetometer: boolean;
   isSimulated: boolean;
 }
+
+// ─── Sensor Availability for Scenario Simulation ──────────────────────────────
+export interface SensorAvailability {
+  accelerometer: boolean;
+  gyroscope: boolean;
+  magnetometer: boolean;
+}
+
+export type SensorType = 'accelerometer' | 'gyroscope' | 'magnetometer';
+
+export type SensorStatusState = 'ACTIVE' | 'FAILED' | 'RESTORING';
+

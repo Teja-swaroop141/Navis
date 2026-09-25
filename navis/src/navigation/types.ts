@@ -8,6 +8,8 @@ export type RootStackParamList = {
   Navigation: { mode: 'LIVE' | 'DEMO' };
   Performance: undefined;
   Simulation: undefined;
+  Scenarios: undefined;
+  SensorFailureScenario: undefined;
 };
 
 export type BottomTabParamList = {
@@ -16,5 +18,6 @@ export type BottomTabParamList = {
   SensorsTab: undefined;
   AnalysisTab: undefined;
   FusionTab: undefined;
+  ScenariosTab: undefined;
 };
 

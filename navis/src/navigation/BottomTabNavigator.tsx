@@ -1,16 +1,18 @@
 /**
  * Bottom Tab Navigator
- * Tabs: Home | Sensors | Dead Reckoning | Fusion
+ * Tabs: Home | Simulation | Scenarios | Sensors | Dead Reckoning | Fusion
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { HomeScreen } from '../screens/HomeScreen';
 import { SimulationScreen } from '../screens/SimulationScreen';
 import { SensorMonitorScreen } from '../screens/SensorMonitorScreen';
 import { DeadReckoningScreen } from '../screens/DeadReckoningScreen';
 import { SensorFusionScreen } from '../screens/SensorFusionScreen';
+import { ScenariosScreen } from '../screens/ScenariosScreen';
 import { colors } from '../theme/colors';
 import { fontWeights, fontSizes } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
@@ -18,10 +20,20 @@ import type { BottomTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
-function TabIcon({ focused, icon, label }: { focused: boolean; icon: string; label: string }) {
+function TabIcon({
+  focused,
+  icon,
+}: {
+  focused: boolean;
+  icon: keyof typeof Feather.glyphMap;
+}) {
   return (
     <View style={[tabStyles.iconWrapper, focused && tabStyles.iconWrapperActive]}>
-      <Text style={[tabStyles.icon, focused && tabStyles.iconActive]}>{icon}</Text>
+      <Feather
+        name={icon}
+        size={20}
+        color={focused ? colors.primary : colors.textTertiary}
+      />
     </View>
   );
 }
@@ -37,8 +49,6 @@ const tabStyles = StyleSheet.create({
   iconWrapperActive: {
     backgroundColor: colors.primarySurface,
   },
-  icon: { fontSize: 20 },
-  iconActive: {},
 });
 
 export function BottomTabNavigator() {
@@ -69,7 +79,7 @@ export function BottomTabNavigator() {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="🏠" label="Home" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="home" />,
         }}
       />
       <Tab.Screen
@@ -77,7 +87,15 @@ export function BottomTabNavigator() {
         component={SimulationScreen}
         options={{
           tabBarLabel: 'Simulation',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="🚗" label="Simulation" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="play-circle" />,
+        }}
+      />
+      <Tab.Screen
+        name="ScenariosTab"
+        component={ScenariosScreen}
+        options={{
+          tabBarLabel: 'Scenarios',
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="layers" />,
         }}
       />
       <Tab.Screen
@@ -85,7 +103,7 @@ export function BottomTabNavigator() {
         component={SensorMonitorScreen}
         options={{
           tabBarLabel: 'Sensors',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="📡" label="Sensors" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="radio" />,
         }}
       />
       <Tab.Screen
@@ -93,7 +111,7 @@ export function BottomTabNavigator() {
         component={DeadReckoningScreen}
         options={{
           tabBarLabel: 'Dead Reckoning',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="🧭" label="DR" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="navigation" />,
         }}
       />
       <Tab.Screen
@@ -101,7 +119,7 @@ export function BottomTabNavigator() {
         component={SensorFusionScreen}
         options={{
           tabBarLabel: 'Fusion',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="🔗" label="Fusion" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="link" />,
         }}
       />
     </Tab.Navigator>

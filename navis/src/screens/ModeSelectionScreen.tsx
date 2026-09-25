@@ -8,6 +8,7 @@ import React, { useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, Animated, TouchableOpacity, ScrollView, StatusBar,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { textStyles, fontSizes, fontWeights } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
@@ -48,7 +49,8 @@ function ModeCard({ title, subtitle, description, features, buttonLabel, onPress
     ]}>
       {featured && (
         <View style={styles.featuredBadge}>
-          <Text style={styles.featuredBadgeText}>✦ Recommended for Demos</Text>
+          <Feather name="star" size={10} color={colors.primaryLight} />
+          <Text style={styles.featuredBadgeText}>Recommended for Demos</Text>
         </View>
       )}
       <Text style={[styles.modeTitle, featured && styles.modeTitleFeatured]}>{title}</Text>
@@ -58,7 +60,7 @@ function ModeCard({ title, subtitle, description, features, buttonLabel, onPress
       <View style={styles.featureList}>
         {features.map((f) => (
           <View key={f} style={styles.featureItem}>
-            <Text style={[styles.featureCheck, featured && { color: colors.primaryLight }]}>✓</Text>
+            <Feather name="check" size={11} color={featured ? colors.primaryLight : colors.gnssActive} />
             <Text style={[styles.featureLabel, featured && styles.featureLabelFeatured]}>{f}</Text>
           </View>
         ))}
@@ -163,6 +165,9 @@ const styles = StyleSheet.create({
   },
   featuredBadge: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1],

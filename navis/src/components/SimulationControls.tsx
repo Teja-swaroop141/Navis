@@ -10,6 +10,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fontSizes, fontWeights, textStyles } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
@@ -52,7 +53,7 @@ export function SimulationControls({
           onPress={onStart}
           activeOpacity={0.88}
         >
-          <Text style={styles.startIcon}>▶</Text>
+          <Feather name="play" size={14} color={colors.surface} style={styles.startIcon as any} />
           <Text style={styles.startText}>START SIMULATION</Text>
         </TouchableOpacity>
       </View>
@@ -92,7 +93,7 @@ export function SimulationControls({
                 onPress={onResume}
                 activeOpacity={0.85}
               >
-                <Text style={styles.resumeIcon}>▶</Text>
+                <Feather name="play" size={10} color={colors.success} />
                 <Text style={styles.resumeText}>RESUME</Text>
               </TouchableOpacity>
             ) : (
@@ -101,7 +102,7 @@ export function SimulationControls({
                 onPress={onPause}
                 activeOpacity={0.85}
               >
-                <Text style={styles.pauseIcon}>⏸</Text>
+                <Feather name="pause" size={11} color={colors.warning} />
                 <Text style={styles.pauseText}>PAUSE</Text>
               </TouchableOpacity>
             )
@@ -112,7 +113,7 @@ export function SimulationControls({
             onPress={onRestart}
             activeOpacity={0.85}
           >
-            <Text style={styles.restartIcon}>↺</Text>
+            <Feather name="rotate-ccw" size={14} color={colors.textSecondary} style={{ marginTop: -1 }} />
             <Text style={styles.restartText}>RESTART</Text>
           </TouchableOpacity>
         </View>
@@ -123,9 +124,11 @@ export function SimulationControls({
           onPress={onTogglePresentationMode}
           activeOpacity={0.8}
         >
-          <Text style={[styles.presentIcon, isPresentationMode && styles.presentIconActive]}>
-            {isPresentationMode ? '✦' : '✧'}
-          </Text>
+          <Feather 
+            name={isPresentationMode ? "star" : "monitor"} 
+            size={12} 
+            color={isPresentationMode ? colors.primaryDark : colors.primary} 
+          />
           <Text style={[styles.presentText, isPresentationMode && styles.presentTextActive]}>
             {isPresentationMode ? 'Demo ON' : 'Presentation'}
           </Text>

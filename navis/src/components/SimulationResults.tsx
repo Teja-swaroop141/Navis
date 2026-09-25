@@ -20,6 +20,7 @@ import {
   Share,
   Platform,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fontSizes, fontWeights, textStyles } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
@@ -88,7 +89,7 @@ export function SimulationResults({ summary, onRunAgain }: SimulationResultsProp
         {/* Header Ribbon */}
         <View style={styles.header}>
           <View style={styles.trophyCircle}>
-            <Text style={styles.trophyIcon}>✓</Text>
+            <Feather name="check-circle" size={22} color={colors.gnssActive} />
           </View>
           <View style={{ flex: 1 }}>
             <View style={styles.badgeRow}>
@@ -203,21 +204,24 @@ export function SimulationResults({ summary, onRunAgain }: SimulationResultsProp
           <View style={styles.checkItem}>
             <Text style={styles.checkTitle}>IMU Integration Health</Text>
             <View style={styles.badgeSuccess}>
-              <Text style={styles.badgeSuccessText}>OPTIMAL ✓</Text>
+              <Feather name="check" size={10} color={colors.gnssActive} />
+              <Text style={styles.badgeSuccessText}>OPTIMAL</Text>
             </View>
           </View>
           <View style={styles.checkDivider} />
           <View style={styles.checkItem}>
             <Text style={styles.checkTitle}>Sensor Fusion Convergence</Text>
             <View style={styles.badgeSuccess}>
-              <Text style={styles.badgeSuccessText}>CONVERGED ✓</Text>
+              <Feather name="check" size={10} color={colors.gnssActive} />
+              <Text style={styles.badgeSuccessText}>CONVERGED</Text>
             </View>
           </View>
           <View style={styles.checkDivider} />
           <View style={styles.checkItem}>
             <Text style={styles.checkTitle}>Continuous Positioning</Text>
             <View style={styles.badgeSuccess}>
-              <Text style={styles.badgeSuccessText}>ZERO DROPOUTS ✓</Text>
+              <Feather name="check" size={10} color={colors.gnssActive} />
+              <Text style={styles.badgeSuccessText}>ZERO DROPOUTS</Text>
             </View>
           </View>
         </View>
@@ -442,6 +446,9 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   badgeSuccess: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#ECFDF5',
     paddingHorizontal: 6,
     paddingVertical: 2,

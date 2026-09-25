@@ -4,6 +4,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Animated, StatusBar } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { textStyles, fontSizes, fontWeights } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
@@ -284,7 +285,7 @@ export function SensorFusionScreen() {
 
         {!isFusing && (
           <View style={styles.infoNote}>
-            <Text style={styles.infoIcon}>ℹ️</Text>
+            <Feather name="info" size={14} color={colors.primary} />
             <Text style={styles.infoText}>
               Fusion activates when GNSS is restored after a DR period. Navigate to the Navigation screen and trigger a GNSS outage cycle to see fusion in action.
             </Text>

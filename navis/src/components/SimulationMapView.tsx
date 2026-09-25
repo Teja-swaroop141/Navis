@@ -29,9 +29,10 @@ interface SimulationMapViewProps {
   onMapReady?: () => void;
   onForkDecisionPause?: () => void;
   onForkDecisionResume?: () => void;
+  disableForkDecision?: boolean;
 }
 
-function buildSimulationHtml(center: LatLng): string {
+function buildSimulationHtml(center: LatLng, disableForkDecision: boolean): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -41,6 +42,9 @@ function buildSimulationHtml(center: LatLng): string {
   <title>3D GNSS Dead Reckoning Simulation</title>
   <!-- Three.js r128 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Leaflet.js for OpenStreetMap Inset Map (Ref Design) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -111,6 +115,94 @@ function buildSimulationHtml(center: LatLng): string {
       box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
     .camera-btn:hover { background: #4f46e5; border-color: #818cf8; }
+    .camera-btn.active { background: #4f46e5; border-color: #818cf8; box-shadow: 0 0 10px rgba(99,102,241,0.5); }
+
+    /* ── OpenStreetMap Mini-Map Inset (Ref Design) ───────────────────── */
+    #minimap-card {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 145px;
+      height: 145px;
+      border-radius: 16px;
+      border: 3px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.3);
+      overflow: hidden;
+      z-index: 180;
+      pointer-events: auto;
+      background: #f8fafc;
+    }
+
+    #minimap-header-label {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      z-index: 500;
+      background: rgba(255, 255, 255, 0.92);
+      color: #3b82f6;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      pointer-events: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    #minimap-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    .minimap-dot {
+      width: 14px;
+      height: 14px;
+      background-color: #2563eb;
+      border: 2.5px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.9);
+      position: relative;
+    }
+
+    .minimap-pulse {
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(37, 99, 235, 0.35);
+      animation: miniPulse 1.8s infinite ease-out;
+    }
+
+    @keyframes miniPulse {
+      0% { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    /* ── Re-center floating button ─────────────────────────────────── */
+    #recenter-btn {
+      position: absolute;
+      bottom: 18px;
+      right: 14px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      color: #f8fafc;
+      font-size: 18px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.55);
+      z-index: 200;
+      transition: all 0.2s ease;
+      pointer-events: auto;
+    }
+    #recenter-btn:hover { background: #4f46e5; border-color: #818cf8; }
+    #recenter-btn.visible { display: flex; }
 
     .state-badge {
       background: #4f46e5;
@@ -252,11 +344,61 @@ function buildSimulationHtml(center: LatLng): string {
       </div>
     </div>
 
-    <div class="hud-right">
+    <div class="hud-right" style="margin-top: 155px;">
       <div class="state-badge" id="hud-state">GNSS ACTIVE</div>
-      <button class="camera-btn" id="cam-toggle" onclick="toggleCameraView()">🚘 3D DRIVE CAM</button>
+      <div style="display:flex;gap:4px;">
+        <button class="camera-btn active" id="btn-3d" onclick="setCameraMode('DRIVE3D')">🧭 3D</button>
+        <button class="camera-btn" id="btn-2d" onclick="setCameraMode('TOP')">🗺 2D</button>
+      </div>
     </div>
   </div>
+
+  <!-- OpenStreetMap Mini-Map Inset (Ref Design) -->
+  <div id="minimap-card">
+    <div id="minimap-header-label">33rd Street</div>
+    <div id="minimap-container" style="position: relative; width: 100%; height: 100%;">
+      <!-- High-Tech OpenStreetMap SVG Fallback -->
+      <svg id="minimap-svg" viewBox="0 0 160 160" style="position: absolute; top:0; left:0; width:100%; height:100%; background: #f1f5f9; z-index: 1;">
+        <rect x="0" y="0" width="160" height="160" fill="#f1f5f9"/>
+        <rect x="10" y="10" width="60" height="48" fill="#e2e8f0" rx="4"/>
+        <rect x="82" y="10" width="68" height="38" fill="#fbcfe8" opacity="0.65" rx="4"/>
+        <text x="92" y="31" font-size="8" font-family="sans-serif" font-weight="bold" fill="#be185d">Korea Town</text>
+        <rect x="10" y="72" width="55" height="78" fill="#e2e8f0" rx="4"/>
+        <rect x="80" y="78" width="70" height="72" fill="#e2e8f0" rx="4"/>
+
+        <!-- Road Network -->
+        <path d="M 0 65 L 160 65" stroke="#ffffff" stroke-width="15"/>
+        <path d="M 0 65 L 160 65" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <text x="80" y="61" font-size="7.5" font-family="sans-serif" font-weight="bold" fill="#475569">W 31st Street</text>
+
+        <path d="M 0 142 L 160 142" stroke="#ffffff" stroke-width="12"/>
+        <text x="75" y="139" font-size="7" font-family="sans-serif" fill="#64748b">West 30th St</text>
+
+        <path d="M 70 0 L 70 160" stroke="#ffffff" stroke-width="15"/>
+        <text x="73" y="115" font-size="7.5" font-family="sans-serif" font-weight="bold" fill="#3b82f6" transform="rotate(90, 73, 115)">33rd Street</text>
+
+        <!-- Pre-tunnel Route Path Polyline -->
+        <path d="M 20 142 L 65 72" stroke="#4f46e5" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+        <!-- HIGHLIGHTED TUNNEL PATH SEGMENT (Amber Dashed) -->
+        <path d="M 65 72 L 108 38" stroke="#f59e0b" stroke-width="6" stroke-linecap="round" stroke-dasharray="6,4" fill="none"/>
+        <text x="86" y="50" font-size="6.5" font-family="sans-serif" font-weight="extrabold" fill="#d97706" transform="rotate(-36, 86, 50)">TUNNEL</text>
+
+        <!-- Post-tunnel Route Path Polyline -->
+        <path d="M 108 38 L 142 16" stroke="#10b981" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+        <!-- Position Marker -->
+        <g id="svg-marker-group" transform="translate(65, 72)">
+          <circle r="9" fill="#2563eb" opacity="0.35"/>
+          <circle r="5.5" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+        </g>
+      </svg>
+      <div id="leaflet-minimap-div" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 2;"></div>
+    </div>
+  </div>
+
+  <!-- Re-center floating button (shown when user pans away) -->
+  <button id="recenter-btn" onclick="recenterCamera()" title="Re-center on vehicle">◎</button>
 
   <!-- Interactive Tunnel Fork Decision Dialog Modal -->
   <div id="decision-dialog-backdrop">
@@ -339,7 +481,8 @@ function buildSimulationHtml(center: LatLng): string {
     var ROAD_WIDTH = 13.5;
     var TOTAL_ROAD_LENGTH = 600;
     var TUNNEL_START_Z = 200;
-    var TUNNEL_FORK_Z = 267; // Halt point & fork junction apex
+    var TUNNEL_FORK_Z = 267; // Fork junction split point
+    var HALT_Z = 284; // Point where simulation pauses for decision dialog
     var TUNNEL_CURVE_APEX_Z = 345;
     var TUNNEL_END_Z = 420;
     var TUNNEL_LENGTH = TUNNEL_END_Z - TUNNEL_START_Z; // 220 units (~320m)
@@ -543,33 +686,80 @@ function buildSimulationHtml(center: LatLng): string {
     forkGroup.add(innerCurbMesh);
     forkGroup.add(outerCurbMesh);
 
-    // 2. Left Branch Road Surface (Clearly curving left at Z = 267 to 375)
-    var leftBypassRoad = createCurvedRoadMesh(266, 375, 10.5, getLeftBypassX, 0x141a24, 0.012);
-    forkGroup.add(leftBypassRoad);
+    // Only add multi-road elements if fork decision is enabled
+    if (!${disableForkDecision}) {
+      // 2. Left Branch Road Surface (Clearly curving left at Z = 267 to 375)
+      var leftBypassRoad = createCurvedRoadMesh(266, 375, 10.5, getLeftBypassX, 0x141a24, 0.012);
+      forkGroup.add(leftBypassRoad);
 
-    // Left branch red lane markings
-    var leftDashMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
-    for (var lz = 268; lz < 370; lz += 10) {
-      var lx = getLeftBypassX(lz);
-      var lAngle = getLeftBypassAngle(lz);
-      var ldMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 4.5), leftDashMat);
-      ldMesh.rotation.x = -Math.PI / 2;
-      ldMesh.rotation.z = -lAngle;
-      ldMesh.position.set(lx, 0.03, lz);
-      forkGroup.add(ldMesh);
+      // Left branch red lane markings
+      var leftDashMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+      for (var lz = 268; lz < 370; lz += 10) {
+        var lx = getLeftBypassX(lz);
+        var lAngle = getLeftBypassAngle(lz);
+        var ldMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 4.5), leftDashMat);
+        ldMesh.rotation.x = -Math.PI / 2;
+        ldMesh.rotation.z = -lAngle;
+        ldMesh.position.set(lx, 0.03, lz);
+        forkGroup.add(ldMesh);
+      }
+
+      // 3. Apex Concrete Crash Barrier Wedge with Hazard Stripes at Z = 270, X = 0
+      var wedgeGeo = new THREE.CylinderGeometry(0.7, 2.2, 3.8, 6);
+      var wedgeMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.45 });
+      var wedge = new THREE.Mesh(wedgeGeo, wedgeMat);
+      wedge.position.set(0, 1.9, 270);
+      forkGroup.add(wedge);
+
+      // Flashing Apex Hazard Light
+      var apexLight = new THREE.PointLight(0xf59e0b, 1.6, 20, 1.5);
+      apexLight.position.set(0, 4.2, 270);
+      forkGroup.add(apexLight);
+
+      // 4. Overhead Gantry Sign Spanning Both Tubes at Z = 265
+      var forkCanvas = document.createElement('canvas');
+      forkCanvas.width = 1024;
+      forkCanvas.height = 256;
+      var fctx = forkCanvas.getContext('2d');
+      fctx.fillStyle = '#0b0f19';
+      fctx.fillRect(0, 0, 1024, 256);
+      fctx.strokeStyle = '#f59e0b';
+      fctx.lineWidth = 14;
+      fctx.strokeRect(7, 7, 1010, 242);
+
+      fctx.fillStyle = '#ef4444';
+      fctx.font = 'bold 44px Arial, sans-serif';
+      fctx.fillText('⬅ EXIT 4B [BYPASS / REJECTED]', 28, 100);
+
+      fctx.fillStyle = '#10b981';
+      fctx.fillText('MAIN ROUTE · NH 275 [CHOSEN] ➡', 500, 100);
+
+      fctx.fillStyle = '#fde68a';
+      fctx.font = 'bold 30px Arial, sans-serif';
+      fctx.fillText('DEAD RECKONING ACTIVE — SENSORS DETECT RIGHT TUBE CURVE', 45, 190);
+
+      var forkSignTex = new THREE.CanvasTexture(forkCanvas);
+      var forkSignMat = new THREE.MeshBasicMaterial({ map: forkSignTex });
+      var forkSignMesh = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_WIDTH + 14, 3.8), forkSignMat);
+      forkSignMesh.position.set(0, 7.8, 265);
+      forkGroup.add(forkSignMesh);
+
+      // 5. Glowing Green Right-Turn Directional Arrows on Asphalt
+      var greenArrowMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+      var turnArrowPositions = [274, 290, 310, 330];
+      turnArrowPositions.forEach(function(az) {
+        var ax = getRouteX(az);
+        var aAngle = getRouteTangentAngle(az);
+        var arrowMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 3.6), greenArrowMat);
+        arrowMesh.rotation.x = -Math.PI / 2;
+        arrowMesh.rotation.z = -aAngle;
+        arrowMesh.position.set(ax, 0.04, az);
+        forkGroup.add(arrowMesh);
+      });
+      
+      // Add flashing beacon reference to global so animation doesn't fail
+      window.apexLight = apexLight;
     }
-
-    // 3. Apex Concrete Crash Barrier Wedge with Hazard Stripes at Z = 270, X = 0
-    var wedgeGeo = new THREE.CylinderGeometry(0.7, 2.2, 3.8, 6);
-    var wedgeMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.45 });
-    var wedge = new THREE.Mesh(wedgeGeo, wedgeMat);
-    wedge.position.set(0, 1.9, 270);
-    forkGroup.add(wedge);
-
-    // Flashing Apex Hazard Light
-    var apexLight = new THREE.PointLight(0xf59e0b, 1.6, 20, 1.5);
-    apexLight.position.set(0, 4.2, 270);
-    forkGroup.add(apexLight);
 
     // 4. Overhead Gantry Sign Spanning Both Tubes at Z = 265
     var forkCanvas = document.createElement('canvas');
@@ -644,19 +834,21 @@ function buildSimulationHtml(center: LatLng): string {
     });
 
     // 7. Left Branch Arched Tunnel Tube (Red Ambient Interior)
-    var leftTubeGeo = new THREE.CylinderGeometry(6.5, 6.5, 105, 12, 1, true, 0, Math.PI);
-    var leftTubeMat = new THREE.MeshStandardMaterial({
-      color: 0x3b0718,
-      roughness: 0.3,
-      transparent: true,
-      opacity: 0.28,
-      side: THREE.DoubleSide
-    });
-    var leftTube = new THREE.Mesh(leftTubeGeo, leftTubeMat);
-    leftTube.rotation.z = Math.PI / 2;
-    leftTube.rotation.y = Math.PI / 2 - 0.38;
-    leftTube.position.set(-14, 0, 320);
-    forkGroup.add(leftTube);
+    if (!${disableForkDecision}) {
+      var leftTubeGeo = new THREE.CylinderGeometry(6.5, 6.5, 105, 12, 1, true, 0, Math.PI);
+      var leftTubeMat = new THREE.MeshStandardMaterial({
+        color: 0x3b0718,
+        roughness: 0.3,
+        transparent: true,
+        opacity: 0.28,
+        side: THREE.DoubleSide
+      });
+      var leftTube = new THREE.Mesh(leftTubeGeo, leftTubeMat);
+      leftTube.rotation.z = Math.PI / 2;
+      leftTube.rotation.y = Math.PI / 2 - 0.38;
+      leftTube.position.set(-14, 0, 320);
+      forkGroup.add(leftTube);
+    }
 
     scene.add(forkGroup);
 
@@ -976,24 +1168,227 @@ function buildSimulationHtml(center: LatLng): string {
     fusedRibbonMesh.visible = false;
     scene.add(fusedRibbonMesh);
 
-    // ─── 11. GOOGLE NAVIGATION 3D CHASE CAMERA & INTERACTIVE DIALOG ──────────
-    var cameraMode = 'DRIVE3D'; // 'DRIVE3D' | 'TOP' | 'HOOD'
-    var targetCameraPos = new THREE.Vector3();
-    var targetLookAt = new THREE.Vector3();
+    // ─── 11. NAVIGATION CAMERA CONTROLLER ────────────────────────────────────
+    //
+    // Shared navigation camera system used by ALL simulation screens.
+    // Implements:
+    //   • Course-Up orientation (vehicle heading always toward top of screen)
+    //   • 3D forward-looking perspective (vehicle in lower-third)
+    //   • Speed-adaptive look-ahead offset
+    //   • Full smooth interpolation (position, yaw, pitch, zoom)
+    //   • Manual-pan detection → auto-follow pause → re-center button
+    //   • Camera states: IDLE (overview) | RUNNING (3D nav) | COMPLETED (zoom-out)
+    //   • 2D / 3D toggle with smooth transition
+    //
 
-    function toggleCameraView() {
-      if (cameraMode === 'DRIVE3D') {
-        cameraMode = 'TOP';
-        document.getElementById('cam-toggle').textContent = '🔝 TOP VIEW';
-      } else if (cameraMode === 'TOP') {
-        cameraMode = 'HOOD';
-        document.getElementById('cam-toggle').textContent = '🏎️ HOOD CAM';
+    var cameraMode = 'DRIVE3D';      // 'DRIVE3D' | 'TOP'
+    var cameraState = 'IDLE';        // 'IDLE' | 'RUNNING' | 'COMPLETED'
+
+    // Current smoothed camera parameters (interpolated every frame)
+    var camCurrent = {
+      x: 0, y: 55, z: -40,          // world position
+      yaw: 0,                        // current heading smoothed (radians, route tangent)
+      pitch: 0.18,                   // tilt (0=top-down, 1=horizon)
+      zoom: 55,                      // effective distance from car
+      lookAhead: 25,                 // look-ahead offset in car-forward direction
+    };
+
+    // Target camera parameters driven by simulation state
+    var camTarget = {
+      x: 0, y: 55, z: -40,
+      yaw: 0,
+      pitch: 0.18,
+      zoom: 55,
+      lookAhead: 25,
+    };
+
+    // ── Manual pan / auto-follow ────────────────────────────────────────
+    var autoFollow = true;           // false when user pans manually
+    var lastManualInteractionTime = 0;
+    var RECENTER_RESTORE_DELAY = 0;  // immediate re-center on button press
+
+    function showRecenter(show) {
+      var btn = document.getElementById('recenter-btn');
+      if (!btn) return;
+      if (show) {
+        btn.classList.add('visible');
       } else {
-        cameraMode = 'DRIVE3D';
-        document.getElementById('cam-toggle').textContent = '🚘 3D DRIVE CAM';
+        btn.classList.remove('visible');
       }
     }
-    window.toggleCameraView = toggleCameraView;
+
+    function recenterCamera() {
+      autoFollow = true;
+      showRecenter(false);
+    }
+    window.recenterCamera = recenterCamera;
+
+    // ── 2D / 3D toggle ──────────────────────────────────────────────────
+    function setCameraMode(mode) {
+      cameraMode = mode;
+      var btn3d = document.getElementById('btn-3d');
+      var btn2d = document.getElementById('btn-2d');
+      if (btn3d && btn2d) {
+        if (mode === 'DRIVE3D') {
+          btn3d.classList.add('active');
+          btn2d.classList.remove('active');
+        } else {
+          btn2d.classList.add('active');
+          btn3d.classList.remove('active');
+        }
+      }
+      // Restore auto-follow when toggling
+      autoFollow = true;
+      showRecenter(false);
+    }
+    window.setCameraMode = setCameraMode;
+
+    // ── Camera state driven by simulation state ─────────────────────────
+    function updateCameraState(simState) {
+      var prev = cameraState;
+      if (simState === 'IDLE' || simState === 'STARTING') {
+        cameraState = 'IDLE';
+      } else if (simState === 'COMPLETED') {
+        cameraState = 'COMPLETED';
+      } else {
+        cameraState = 'RUNNING';
+      }
+
+      // On transition from IDLE → RUNNING, ensure autoFollow is on
+      if (prev !== 'RUNNING' && cameraState === 'RUNNING') {
+        autoFollow = true;
+        showRecenter(false);
+      }
+    }
+
+    // ── Look-ahead amount based on speed ────────────────────────────────
+    function calcLookAhead(speedKmh) {
+      // Range: 12 (stopped) → 45 (fast highway)
+      var clamped = Math.max(0, Math.min(130, speedKmh));
+      return 12 + (clamped / 130) * 33;
+    }
+
+    // ── Camera target computation ────────────────────────────────────────
+    // Builds target camera parameters for the current frame.
+    // All values are fed through per-frame lerp to produce smooth motion.
+    function computeCameraTarget(carX, carZ, carYaw, speedKmh, state) {
+      updateCameraState(state);
+
+      if (cameraMode === 'TOP') {
+        // ── 2D / North-Up Top View ─────────────────────────────────────────
+        camTarget.x = carX;
+        camTarget.y = 52;
+        camTarget.z = carZ;
+        camTarget.yaw = 0;           // north-up: no rotation
+        camTarget.pitch = 0.0;       // straight down
+        camTarget.zoom = 52;
+        camTarget.lookAhead = 12;
+        return;
+      }
+
+      // ── DRIVE3D: Navigation perspective ───────────────────────────────
+      switch (cameraState) {
+        case 'IDLE': {
+          // Wide route overview, slight tilt, north-up acceptable
+          camTarget.x = carX;
+          camTarget.y = 72;
+          camTarget.z = carZ - 30;
+          camTarget.yaw = 0;
+          camTarget.pitch = 0.14;
+          camTarget.zoom = 72;
+          camTarget.lookAhead = 40;
+          break;
+        }
+        case 'COMPLETED': {
+          // Smooth zoom-out to full route overview
+          camTarget.x = carX;
+          camTarget.y = 120;
+          camTarget.z = carZ - 60;
+          camTarget.yaw = 0;
+          camTarget.pitch = 0.1;
+          camTarget.zoom = 120;
+          camTarget.lookAhead = 60;
+          break;
+        }
+        default: {
+          // RUNNING — full 3D navigation perspective
+          // Camera sits behind-and-above the vehicle, angled forward.
+          // Look-ahead places more road in front on screen.
+          var la = calcLookAhead(speedKmh);
+          camTarget.yaw   = carYaw;           // course-up: heading toward top
+          camTarget.pitch = 0.42;             // moderate forward tilt
+          camTarget.zoom  = 22;              // tight follow distance
+          camTarget.lookAhead = la;
+
+          // Camera offset: behind car along current heading
+          // We use carYaw (route tangent) as reference direction.
+          var behindDist = 17;
+          var heightVal  = 9.0;
+          // position behind+above in heading direction
+          camTarget.x = carX - Math.sin(carYaw) * behindDist;
+          camTarget.y = heightVal;
+          camTarget.z = carZ - Math.cos(carYaw) * behindDist;
+          break;
+        }
+      }
+    }
+
+    // Angular lerp (handles wrap-around at ±π)
+    function lerpAngle(a, b, t) {
+      var diff = b - a;
+      while (diff >  Math.PI) diff -= 2 * Math.PI;
+      while (diff < -Math.PI) diff += 2 * Math.PI;
+      return a + diff * t;
+    }
+
+    // Apply the smoothed camera to the Three.js camera each frame
+    function applyCameraFrame(carX, carZ, carYaw, speedKmh) {
+      if (!autoFollow) return;  // user is panning manually
+
+      var lerpPos, lerpRot;
+      if (cameraState === 'RUNNING' && cameraMode === 'DRIVE3D') {
+        lerpPos = 0.10;   // smooth follow
+        lerpRot = 0.08;   // smooth rotation
+      } else if (cameraState === 'COMPLETED') {
+        lerpPos = 0.04;   // slow zoom-out
+        lerpRot = 0.04;
+      } else {
+        lerpPos = 0.06;   // idle / 2D
+        lerpRot = 0.06;
+      }
+
+      // Interpolate all camera parameters
+      camCurrent.x     += (camTarget.x     - camCurrent.x)     * lerpPos;
+      camCurrent.y     += (camTarget.y     - camCurrent.y)     * lerpPos;
+      camCurrent.z     += (camTarget.z     - camCurrent.z)     * lerpPos;
+      camCurrent.yaw    = lerpAngle(camCurrent.yaw, camTarget.yaw, lerpRot);
+      camCurrent.pitch += (camTarget.pitch - camCurrent.pitch) * lerpRot;
+      camCurrent.lookAhead += (camTarget.lookAhead - camCurrent.lookAhead) * lerpPos;
+
+      // Set actual camera position
+      camera.position.set(camCurrent.x, camCurrent.y, camCurrent.z);
+
+      // Compute look-at point:
+      // In RUNNING 3D mode: look toward car + look-ahead in heading direction
+      // placing the car in the lower portion of the viewport.
+      var lookX, lookY, lookZ;
+      if (cameraState === 'RUNNING' && cameraMode === 'DRIVE3D') {
+        var la = camCurrent.lookAhead;
+        lookX = carX + Math.sin(camCurrent.yaw) * la;
+        lookY = 1.5;
+        lookZ = carZ + Math.cos(camCurrent.yaw) * la;
+      } else if (cameraMode === 'TOP') {
+        lookX = carX;
+        lookY = 0;
+        lookZ = carZ;
+      } else {
+        // IDLE / COMPLETED overview
+        lookX = carX + Math.sin(camCurrent.yaw) * camCurrent.lookAhead;
+        lookY = 0;
+        lookZ = carZ + Math.cos(camCurrent.yaw) * camCurrent.lookAhead;
+      }
+      camera.lookAt(lookX, lookY, lookZ);
+    }
 
     function notifyParent(type) {
       var msg = JSON.stringify({ type: type });
@@ -1019,9 +1414,9 @@ function buildSimulationHtml(center: LatLng): string {
       decisionShown = true;
       isPausedForDecision = true;
 
-      // Lock position right at the fork stop line
-      simData.carZ = TUNNEL_FORK_Z;
-      simData.progress = (TUNNEL_FORK_Z / TOTAL_ROAD_LENGTH) * 100;
+      // Lock position at the halt line inside the curve
+      simData.carZ = HALT_Z;
+      simData.progress = (HALT_Z / TOTAL_ROAD_LENGTH) * 100;
       simData.targetProgress = simData.progress;
       simData.speedKmh = 0;
 
@@ -1066,10 +1461,135 @@ function buildSimulationHtml(center: LatLng): string {
       isInsideTunnel: false,
       isApproachingTunnel: false,
       driftMeters: 0,
+      disableForkDecision: false,
     };
+
+    // ── OpenStreetMap Mini-Map Initializer & Route Geometry ──────────────
+    var miniMap = null;
+    var miniMapMarker = null;
+    var miniMapAttempts = 0;
+
+    // Route Waypoints for smooth 60 FPS interpolation
+    var routePoints = [
+      [37.798020, -122.405500], // Start: Columbus Ave
+      [37.797990, -122.406800], // Stockton St
+      [37.797950, -122.408500], // Mid-block
+      [37.797910, -122.410100], // Powell St
+      [37.797870, -122.411400], // Pre-tunnel Mason St
+      [37.797820, -122.412100], // Tunnel Entrance Portal
+      [37.797800, -122.412900], // Tunnel: Taylor St
+      [37.797775, -122.413800], // Tunnel: Mid-chamber
+      [37.797745, -122.414800], // Tunnel: Jones St
+      [37.797715, -122.415800], // Tunnel: Leavenworth St
+      [37.797680, -122.416800], // Tunnel Exit Portal
+      [37.797650, -122.417800], // Hyde St
+      [37.797620, -122.419200], // Larkin St
+      [37.797580, -122.420800], // Polk St
+      [37.797520, -122.423500]  // Destination: Van Ness Ave
+    ];
+
+    function getRouteLatLngAtProgress(prog) {
+      var clamped = Math.max(0, Math.min(100, prog));
+      var t = clamped / 100;
+      var totalSegs = routePoints.length - 1;
+      var scaledT = t * totalSegs;
+      var idx = Math.floor(scaledT);
+      if (idx >= totalSegs) return routePoints[totalSegs];
+
+      var frac = scaledT - idx;
+      var p1 = routePoints[idx];
+      var p2 = routePoints[idx + 1];
+
+      var lat = p1[0] + (p2[0] - p1[0]) * frac;
+      var lng = p1[1] + (p2[1] - p1[1]) * frac;
+      return [lat, lng];
+    }
+
+    function initLeafletMiniMap() {
+      if (miniMap) return;
+      if (typeof L === 'undefined') {
+        miniMapAttempts++;
+        if (miniMapAttempts < 40) {
+          setTimeout(initLeafletMiniMap, 150);
+        }
+        return;
+      }
+
+      var mapDiv = document.getElementById('leaflet-minimap-div');
+      if (!mapDiv) return;
+
+      try {
+        var miniCenter = [${center.latitude}, ${center.longitude}];
+        miniMap = L.map('leaflet-minimap-div', {
+          zoomControl: false,
+          attributionControl: false,
+          dragging: false,
+          scrollWheelZoom: false,
+          doubleClickZoom: false,
+          touchZoom: false
+        }).setView(miniCenter, 17);
+
+        // 100% Free Official OpenStreetMap Tile Server (No API Key Required)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          subdomains: ['a', 'b', 'c'],
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(miniMap);
+
+        // 1. Pre-Tunnel Segment (Indigo)
+        var preTunnelPts = routePoints.slice(0, 6);
+        L.polyline(preTunnelPts, {
+          color: '#4F46E5',
+          weight: 4.5,
+          opacity: 0.9
+        }).addTo(miniMap);
+
+        // 2. HIGHLIGHTED TUNNEL PATH SEGMENT (Glowing Amber Dashed Line)
+        var tunnelPts = routePoints.slice(5, 11);
+        L.polyline(tunnelPts, {
+          color: '#F59E0B',
+          weight: 6.5,
+          opacity: 0.95,
+          dashArray: '8, 6'
+        }).addTo(miniMap);
+
+        // 3. Post-Tunnel Segment (Emerald Green)
+        var postTunnelPts = routePoints.slice(10);
+        L.polyline(postTunnelPts, {
+          color: '#10B981',
+          weight: 4.5,
+          opacity: 0.9
+        }).addTo(miniMap);
+
+        // Car Marker
+        var carIcon = L.divIcon({
+          className: 'minimap-custom-icon',
+          html: '<div class="minimap-dot"><div class="minimap-pulse"></div></div>',
+          iconSize: [14, 14],
+          iconAnchor: [7, 7]
+        });
+
+        miniMapMarker = L.marker(miniCenter, { icon: carIcon }).addTo(miniMap);
+
+        setTimeout(function() {
+          if (miniMap) miniMap.invalidateSize();
+        }, 300);
+        setTimeout(function() {
+          if (miniMap) miniMap.invalidateSize();
+        }, 1000);
+      } catch(e) {
+        console.log('MiniMap notice:', e);
+      }
+    }
+
+    initLeafletMiniMap();
 
     function updateSimulationMap(data) {
       if (!data) return;
+
+      if (data.disableForkDecision !== undefined) {
+        simData.disableForkDecision = !!data.disableForkDecision;
+      }
 
       var prog = (data.position && data.progress !== undefined)
         ? data.progress
@@ -1131,6 +1651,35 @@ function buildSimulationHtml(center: LatLng): string {
         markerPillMat.color.setHex(0x6366f1);
       }
 
+      // Update SVG marker position (always works instantly)
+      var svgMarker = document.getElementById('svg-marker-group');
+      if (svgMarker) {
+        var svgX = 20 + (prog / 100) * 120;
+        var svgY = 142 - (prog / 100) * 124;
+        svgMarker.setAttribute('transform', 'translate(' + svgX + ', ' + svgY + ')');
+      }
+
+      // Update Mini-Map OpenStreetMap position & marker
+      if (data.position && data.position.length === 2 && miniMap && miniMapMarker) {
+        var lat = data.position[0];
+        var lng = data.position[1];
+        miniMapMarker.setLatLng([lat, lng]);
+        miniMap.panTo([lat, lng], { animate: true, duration: 0.1 });
+
+        var streetLabel = document.getElementById('minimap-header-label');
+        if (streetLabel) {
+          if (simData.isInsideTunnel) {
+            streetLabel.textContent = 'Broadway Tunnel';
+          } else if (prog > 60) {
+            streetLabel.textContent = 'Van Ness Ave';
+          } else if (prog > 30) {
+            streetLabel.textContent = '31st Street';
+          } else {
+            streetLabel.textContent = '33rd Street';
+          }
+        }
+      }
+
       // Reset state upon re-run or restart
       if (data.state === 'STARTING' || data.state === 'IDLE') {
         decisionShown = false;
@@ -1149,17 +1698,17 @@ function buildSimulationHtml(center: LatLng): string {
       var delta = clock.getDelta();
 
       if (isPausedForDecision) {
-        // Car is stopped completely at the fork line until user clicks Next button
-        simData.carZ = TUNNEL_FORK_Z;
-        simData.progress = (TUNNEL_FORK_Z / TOTAL_ROAD_LENGTH) * 100;
+        // Car is stopped completely at the halt line until user clicks Next button
+        simData.carZ = HALT_Z;
+        simData.progress = (HALT_Z / TOTAL_ROAD_LENGTH) * 100;
         simData.targetProgress = simData.progress;
       } else {
         // Smooth continuous progress interpolation
         simData.progress += (simData.targetProgress - simData.progress) * 0.15;
         simData.carZ = (simData.progress / 100) * TOTAL_ROAD_LENGTH;
 
-        // Check if car reaches the fork junction: must halt and show decision dialog
-        if (!decisionShown && simData.isInsideTunnel && simData.carZ >= TUNNEL_FORK_Z - 1.5) {
+        // Check if car reaches the halt junction: must halt and show decision dialog (unless disabled)
+        if (!simData.disableForkDecision && !decisionShown && simData.isInsideTunnel && simData.carZ >= HALT_Z - 1.5) {
           triggerDecisionDialog();
         }
       }
@@ -1181,6 +1730,35 @@ function buildSimulationHtml(center: LatLng): string {
       carGroup.position.set(simData.carX, 0, simData.carZ);
       carGroup.rotation.y = simData.carHeading;
 
+      // ── 60 FPS REAL-TIME OPENSTREETMAP MARKER MOTION ───────────────────────
+      var curLatLng = getRouteLatLngAtProgress(simData.progress);
+      if (miniMap && miniMapMarker && curLatLng) {
+        miniMapMarker.setLatLng(curLatLng);
+        miniMap.panTo(curLatLng, { animate: false });
+
+        var streetLabel = document.getElementById('minimap-header-label');
+        if (streetLabel) {
+          if (simData.isInsideTunnel) {
+            streetLabel.textContent = 'Broadway Tunnel (GNSS DENIED)';
+            streetLabel.style.color = '#d97706';
+          } else if (simData.progress > 60) {
+            streetLabel.textContent = 'Van Ness Ave';
+            streetLabel.style.color = '#059669';
+          } else {
+            streetLabel.textContent = '33rd Street';
+            streetLabel.style.color = '#2563eb';
+          }
+        }
+      }
+
+      // Update SVG marker position (always works smoothly at 60 FPS)
+      var svgMarker = document.getElementById('svg-marker-group');
+      if (svgMarker) {
+        var svgX = 20 + (simData.progress / 100) * 122;
+        var svgY = 142 - (simData.progress / 100) * 126;
+        svgMarker.setAttribute('transform', 'translate(' + svgX + ', ' + svgY + ')');
+      }
+
       // Front wheels turn realistically into the right curve
       var steerAngle = 0;
       if (simData.carZ >= 267 && simData.carZ <= TUNNEL_CURVE_APEX_Z + 15) {
@@ -1201,9 +1779,11 @@ function buildSimulationHtml(center: LatLng): string {
         w.children[0].rotation.x += spinSpeed;
       });
 
-      // Flashing beacons
-      var strobe = Math.sin(clock.getElapsedTime() * 8) > 0;
-      apexLight.intensity = strobe ? 1.8 : 0.4;
+      // Flashing beacons (if present)
+      if (window.apexLight) {
+        var strobe = Math.sin(clock.getElapsedTime() * 8) > 0;
+        window.apexLight.intensity = strobe ? 1.8 : 0.4;
+      }
 
       // Update Pre-allocated 3D Trajectory Ribbons
       // 1. GNSS ribbon (Pre-tunnel, X = 0)
@@ -1260,43 +1840,10 @@ function buildSimulationHtml(center: LatLng): string {
         fusedRibbonMesh.visible = false;
       }
 
-      // Google Navigation 3D Chase Camera: Follows behind car and tracks into the curve
-      if (cameraMode === 'DRIVE3D') {
-        var camDist = 17;
-        var camHeight = 8.5;
-        var lookAheadDist = 28;
-        var yaw = carGroup.rotation.y;
-
-        targetCameraPos.set(
-          simData.carX - Math.sin(yaw) * camDist,
-          camHeight,
-          simData.carZ - Math.cos(yaw) * camDist
-        );
-        targetLookAt.set(
-          simData.carX + Math.sin(yaw) * lookAheadDist,
-          2.0,
-          simData.carZ + Math.cos(yaw) * lookAheadDist
-        );
-        camera.position.lerp(targetCameraPos, 0.12);
-        camera.lookAt(targetLookAt);
-      } else if (cameraMode === 'TOP') {
-        // High top-down view
-        targetCameraPos.set(simData.carX, 38, simData.carZ - 6);
-        targetLookAt.set(simData.carX, 0, simData.carZ + 8);
-        camera.position.lerp(targetCameraPos, 0.15);
-        camera.lookAt(targetLookAt);
-      } else if (cameraMode === 'HOOD') {
-        // Front bumper / driver hood view
-        var yaw = carGroup.rotation.y;
-        targetCameraPos.set(simData.carX, 1.45, simData.carZ + 1.2);
-        targetLookAt.set(
-          simData.carX + Math.sin(yaw) * 35,
-          1.2,
-          simData.carZ + Math.cos(yaw) * 35
-        );
-        camera.position.lerp(targetCameraPos, 0.25);
-        camera.lookAt(targetLookAt);
-      }
+      // ── Navigation Camera: Course-Up, 3D forward perspective, smooth follow ──
+      var carYawForCamera = carGroup.rotation.y;
+      computeCameraTarget(simData.carX, simData.carZ, carYawForCamera, simData.speedKmh, simData.state);
+      applyCameraFrame(simData.carX, simData.carZ, carYawForCamera, simData.speedKmh);
 
       renderer.render(scene, camera);
     }
@@ -1331,6 +1878,7 @@ export function SimulationMapView({
   onMapReady,
   onForkDecisionPause,
   onForkDecisionResume,
+  disableForkDecision = false,
 }: SimulationMapViewProps) {
   const webRef = useRef<WebView>(null);
   const readyRef = useRef(false);
@@ -1359,6 +1907,7 @@ export function SimulationMapView({
       isApproachingTunnel: frame.isApproachingTunnel,
       isPresentation: isPresentationMode,
       position: [frame.carPosition.latitude, frame.carPosition.longitude],
+      disableForkDecision: !!disableForkDecision,
     };
 
     if (Platform.OS === 'web') {
@@ -1374,13 +1923,13 @@ export function SimulationMapView({
     if (!webRef.current || !readyRef.current) return;
     const js = `if (window.updateSimulationMap) { window.updateSimulationMap(${JSON.stringify(payload)}); } true;`;
     webRef.current.injectJavaScript(js);
-  }, [frame, markerColor, markerLabel, isPresentationMode]);
+  }, [frame, markerColor, markerLabel, isPresentationMode, disableForkDecision]);
 
   useEffect(() => {
     pushUpdate();
   }, [pushUpdate]);
 
-  const html = useMemo(() => buildSimulationHtml(initialCenter), []);
+  const html = useMemo(() => buildSimulationHtml(initialCenter, disableForkDecision), [disableForkDecision]);
 
   const handleMessage = useCallback((eventData: string) => {
     try {

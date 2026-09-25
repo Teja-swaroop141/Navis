@@ -9,6 +9,7 @@ import React, { useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, StatusBar, Animated,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { textStyles, fontSizes, fontWeights } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
@@ -339,7 +340,7 @@ export function SensorMonitorScreen() {
 
         {!hasRealSensors && (
           <View style={styles.simNote}>
-            <Text style={styles.simNoteIcon}>ℹ️</Text>
+            <Feather name="info" size={14} color={colors.primary} />
             <Text style={styles.simNoteText}>
               Running synthetic sensor stream — real hardware sensors unavailable on this device.
               All values animate continuously so you can verify the UI updates in real-time.

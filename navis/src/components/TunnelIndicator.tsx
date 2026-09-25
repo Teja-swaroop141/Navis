@@ -11,6 +11,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fontSizes, fontWeights, textStyles } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
@@ -41,7 +42,7 @@ export function TunnelIndicator({
     return (
       <View style={[styles.container, styles.advisoryContainer]}>
         <View style={styles.advisoryIconCircle}>
-          <Text style={styles.advisoryIcon}>⚠</Text>
+          <Feather name="alert-triangle" size={14} color={colors.surface} style={{ fontWeight: 'bold' as any }} />
         </View>
         <View style={styles.advisoryTextWrap}>
           <Text style={styles.advisoryTitle}>Approaching GNSS-Denied Zone</Text>

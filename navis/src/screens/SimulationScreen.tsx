@@ -258,9 +258,9 @@ const styles = StyleSheet.create({
   },
   legendOverlay: {
     position: 'absolute',
-    top: spacing[3],
-    right: spacing[3],
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    bottom: spacing[3],
+    left: spacing[3],
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: radius.lg,
@@ -270,6 +270,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight,
     ...shadows.sm,
+    zIndex: 10,
   },
   legendItem: {
     flexDirection: 'row',

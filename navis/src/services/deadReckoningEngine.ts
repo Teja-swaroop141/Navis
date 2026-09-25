@@ -18,7 +18,7 @@
  * full INS/Kalman filter implementation (optionally via FastAPI backend).
  */
 
-import { LatLng, Vec3, AccelerometerData, GyroscopeData, MagnetometerData, DeadReckoningState } from '../types';
+import { LatLng, Vec3, AccelerometerData, GyroscopeData, MagnetometerData, DeadReckoningState, SensorAvailability } from '../types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STEP_LENGTH_M = 0.72;          // Average step length in meters
@@ -49,6 +49,11 @@ export class DeadReckoningEngine {
   private state: EngineState;
   private startTime: number = 0;
   private isActive: boolean = false;
+  private sensorAvailability: SensorAvailability = {
+    accelerometer: true,
+    gyroscope: true,
+    magnetometer: true,
+  };
 
   constructor() {
     this.state = {
@@ -83,6 +88,17 @@ export class DeadReckoningEngine {
   }
 
   /**
+   * Configure sensor availability for adaptive dead reckoning.
+   */
+  setSensorAvailability(availability: SensorAvailability): void {
+    this.sensorAvailability = { ...availability };
+  }
+
+  getSensorAvailability(): SensorAvailability {
+    return { ...this.sensorAvailability };
+  }
+
+  /**
    * Reset the engine.
    */
   stop(): void {
@@ -94,6 +110,10 @@ export class DeadReckoningEngine {
    * Returns true if a step was detected.
    */
   processAccelerometer(data: AccelerometerData): boolean {
+    if (!this.sensorAvailability.accelerometer) {
+      return false;
+    }
+
     // Low-pass filter to isolate gravity
     this.state.gravity.x = LOW_PASS_ALPHA * data.x + (1 - LOW_PASS_ALPHA) * this.state.gravity.x;
     this.state.gravity.y = LOW_PASS_ALPHA * data.y + (1 - LOW_PASS_ALPHA) * this.state.gravity.y;
@@ -138,7 +158,7 @@ export class DeadReckoningEngine {
    * Process gyroscope data to update heading rate.
    */
   processGyroscope(data: GyroscopeData): void {
-    if (!this.isActive) return;
+    if (!this.isActive || !this.sensorAvailability.gyroscope) return;
 
     const now = Date.now();
     const dt = (now - this.state.lastTimestamp) / 1000; // seconds
@@ -162,15 +182,20 @@ export class DeadReckoningEngine {
    * Process magnetometer data to correct absolute heading.
    */
   processMagnetometer(data: MagnetometerData): void {
-    if (!this.isActive) return;
+    if (!this.isActive || !this.sensorAvailability.magnetometer) return;
 
     // Compute magnetic heading from X and Y components
     const magHeading = ((Math.atan2(data.y, data.x) * 180) / Math.PI + 360) % 360;
 
     // Fuse gyro heading (drift) with mag heading (absolute but noisy)
-    this.state.heading =
-      GYRO_HEADING_WEIGHT * this.state.heading +
-      MAG_HEADING_WEIGHT * magHeading;
+    if (this.sensorAvailability.gyroscope) {
+      this.state.heading =
+        GYRO_HEADING_WEIGHT * this.state.heading +
+        MAG_HEADING_WEIGHT * magHeading;
+    } else {
+      // Gyro unavailable: rely purely on magnetometer absolute heading
+      this.state.heading = magHeading;
+    }
     this.state.heading = ((this.state.heading % 360) + 360) % 360;
   }
 
