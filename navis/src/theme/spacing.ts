@@ -26,30 +26,31 @@ export const radius = {
   full: 9999,
 };
 
+// Warm-toned shadows matching the reference cream app aesthetic
 export const shadows = {
   sm: {
-    shadowColor: 'rgba(99, 102, 241, 0.15)',
+    shadowColor: 'rgba(180, 150, 80, 0.18)',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
     elevation: 2,
   },
   md: {
-    shadowColor: 'rgba(99, 102, 241, 0.15)',
+    shadowColor: 'rgba(100, 80, 30, 0.14)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 16,
     elevation: 4,
   },
   lg: {
-    shadowColor: 'rgba(15, 14, 42, 0.12)',
+    shadowColor: 'rgba(80, 60, 20, 0.12)',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 1,
     shadowRadius: 24,
     elevation: 8,
   },
   xl: {
-    shadowColor: 'rgba(15, 14, 42, 0.15)',
+    shadowColor: 'rgba(60, 40, 10, 0.14)',
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 1,
     shadowRadius: 40,

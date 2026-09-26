@@ -1,5 +1,6 @@
 /**
- * GlassCard — Premium floating card with soft shadow and optional blur
+ * GlassCard — Premium floating white card on warm cream background
+ * Matches the reference design: white card with warm soft shadow
  */
 
 import React from 'react';
@@ -24,14 +25,15 @@ export function GlassCard({ children, style, padding = spacing[5], elevated = fa
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.glass,
+    backgroundColor: colors.surface,
     borderRadius: radius['2xl'],
     borderWidth: 1,
     borderColor: colors.borderLight,
-    ...shadows.md,
+    ...shadows.sm,
   },
   elevated: {
-    ...shadows.lg,
+    ...shadows.md,
     backgroundColor: colors.surface,
+    borderColor: colors.border,
   },
 });

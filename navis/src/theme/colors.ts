@@ -1,20 +1,20 @@
 /**
  * colors.ts — NAVIS Brand Design System
- * 
- * Strict Color Theme:
- * - Brand Cream: #FAEDCB
- * - Pure White: #FFFFFF
- * - Deep Onyx Black: #000000
- * - Monochrome Gray Tones (strictly black-to-white spectrum)
- * 
+ *
+ * Color Theme (inspired by reference warm-cream app design):
+ * - App Background: #FAF8F3 (warm light cream — white cards float above this)
+ * - Cards/Surface: #FFFFFF (pure white floating panels)
+ * - Brand Cream: #FAEDCB (CTA buttons, badges, active states)
+ * - Deep Black: #1A1A1A (primary text, borders)
+ *
  * Simulation Colors: Kept intact for scientific trajectory demonstration.
  */
 
 export const colors = {
-  // Brand Cream Highlight (#FAEDCB)
+  // Brand Cream (#FAEDCB)
   brandCream: '#FAEDCB',
   brandCreamDark: '#E5D6A7',
-  brandCreamLight: '#FDFCF7',
+  brandCreamLight: '#FDF9F0',
   brandCreamSurface: '#FAEDCB',
 
   // Monochromatic Fundamentals
@@ -25,12 +25,12 @@ export const colors = {
   blackBorder: '#262626',
 
   white: '#FFFFFF',
-  whiteSoft: '#FAFAFA',
-  whiteMuted: '#F5F5F5',
-  whiteBorder: '#E5E5E5',
+  whiteSoft: '#FAFAF8',
+  whiteMuted: '#F5F3EE',
+  whiteBorder: '#EDE8DF',
 
   // Primary Palette (High-contrast Black & Cream)
-  primary: '#000000',
+  primary: '#1A1A1A',
   primaryLight: '#262626',
   primaryDark: '#000000',
   primarySurface: '#FAEDCB',
@@ -38,67 +38,68 @@ export const colors = {
   // Primary Yellow / Cream CTAs & Badges (#FAEDCB)
   primaryYellow: '#FAEDCB',
   primaryYellowDark: '#DEC886',
-  primaryYellowLight: '#FDFCF7',
+  primaryYellowLight: '#FDF9F0',
   yellowSurface: '#FAEDCB',
   yellowText: '#000000',
 
   // Secondary Palette
   secondary: '#FAEDCB',
-  secondaryLight: '#FDFCF7',
+  secondaryLight: '#FDF9F0',
   secondarySurface: '#FAEDCB',
 
   // Highlight Accents
-  accentLime: '#000000',
+  accentLime: '#1A1A1A',
   accentLimeLight: '#FAEDCB',
   accentLimeText: '#000000',
 
   // Background Gradients & Surfaces
   gradientStart: '#FAEDCB',
-  gradientMiddle: '#FDFCF7',
+  gradientMiddle: '#FDF9F4',
   gradientEnd: '#FFFFFF',
 
-  background: '#FFFFFF',
+  // App background: warm cream — floating white cards sit on top (reference design style)
+  background: '#FAF8F3',
   surface: '#FFFFFF',
   surfaceElevated: '#FFFFFF',
-  surfaceSecondary: '#F8F8F8',
-  lavender: '#FAEDCB',
+  surfaceSecondary: '#F5F2EC',
+  lavender: '#FDF5E6',
   lavenderMid: '#F5EEDC',
 
   // Text
-  textPrimary: '#000000',
-  textSecondary: '#404040',
-  textTertiary: '#737373',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#525252',
+  textTertiary: '#8A8A8A',
   textOnPrimary: '#FFFFFF',
   textOnCream: '#000000',
 
-  // Status colors (Black, White, and #FAEDCB)
-  gnssActive: '#000000',
-  gnssLost: '#737373',
-  deadReckoning: '#000000',
-  recovering: '#000000',
-  fused: '#000000',
+  // Status colors (Black, Cream, Gray spectrum)
+  gnssActive: '#1A1A1A',
+  gnssLost: '#8A8A8A',
+  deadReckoning: '#1A1A1A',
+  recovering: '#1A1A1A',
+  fused: '#1A1A1A',
 
   // Status surfaces
   gnssActiveSurface: '#FAEDCB',
-  gnssLostSurface: '#F4F4F5',
-  deadReckoningSurface: '#FAEDCB',
-  fusedSurface: '#FAEDCB',
+  gnssLostSurface: '#F0EDE8',
+  deadReckoningSurface: '#FDF5E6',
+  fusedSurface: '#FDF5E6',
 
   // UI
-  border: '#E5E5E5',
-  borderLight: '#F0F0F0',
+  border: '#EDE8DF',
+  borderLight: '#F3EFE8',
   borderDark: '#000000',
   borderCream: '#FAEDCB',
-  divider: '#E5E5E5',
-  shadow: 'rgba(0, 0, 0, 0.08)',
-  shadowDark: 'rgba(0, 0, 0, 0.16)',
+  divider: '#EDE8DF',
+  shadow: 'rgba(0, 0, 0, 0.06)',
+  shadowDark: 'rgba(0, 0, 0, 0.12)',
   overlay: 'rgba(0, 0, 0, 0.7)',
   glass: 'rgba(255, 255, 255, 0.96)',
 
   // Trajectories (for map overlays & charts)
-  trajectoryGNSS: '#000000',
+  trajectoryGNSS: '#1A1A1A',
   trajectoryDR: '#FAEDCB',
-  trajectoryFused: '#000000',
+  trajectoryFused: '#1A1A1A',
   trajectoryReference: '#A3A3A3',
 
   // Map markers
@@ -107,20 +108,20 @@ export const colors = {
   markerFused: '#000000',
 
   // Danger / Warning / Success (Monochrome + Cream)
-  danger: '#000000',
-  dangerSurface: '#F4F4F5',
+  danger: '#1A1A1A',
+  dangerSurface: '#F0EDE8',
   warning: '#FAEDCB',
-  warningSurface: '#FAEDCB',
-  success: '#000000',
-  successSurface: '#FAEDCB',
+  warningSurface: '#FDF5E6',
+  success: '#1A1A1A',
+  successSurface: '#FDF5E6',
 
-  // Neutral Grays (Monochromatic spectrum)
-  gray50: '#FAFAFA',
-  gray100: '#F5F5F5',
-  gray200: '#E5E5E5',
-  gray300: '#D4D4D4',
-  gray400: '#A3A3A3',
-  gray500: '#737373',
+  // Neutral Grays (Warm monochromatic spectrum)
+  gray50: '#FAF8F5',
+  gray100: '#F3EFE8',
+  gray200: '#E8E3D8',
+  gray300: '#D4CEC2',
+  gray400: '#A8A29A',
+  gray500: '#737065',
 
   // SIMULATION PRESERVED COLORS (kept unchanged per instructions: "let the simulation color be unchanged")
   simGNSS: '#4F46E5',

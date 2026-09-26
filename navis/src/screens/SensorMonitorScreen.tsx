@@ -314,7 +314,7 @@ export function SensorMonitorScreen() {
         <LiveSensorCard
           title="Gyroscope" unit="rad/s"
           x={imu?.gyroscope?.x} y={imu?.gyroscope?.y} z={imu?.gyroscope?.z}
-          color={colors.secondary} isActive={!!imu}
+          color={colors.primary} isActive={!!imu}
         />
 
         {/* Magnetometer */}

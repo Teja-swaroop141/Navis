@@ -1,5 +1,6 @@
 /**
  * Bottom Tab Navigator
+ * Reference design style: warm cream tab bar with white active indicator
  * Tabs: Home | Simulation | Scenarios | Sensors | Dead Reckoning | Fusion
  */
 
@@ -15,7 +16,7 @@ import { SensorFusionScreen } from '../screens/SensorFusionScreen';
 import { ScenariosScreen } from '../screens/ScenariosScreen';
 import { colors } from '../theme/colors';
 import { fontWeights, fontSizes } from '../theme/typography';
-import { spacing, radius } from '../theme/spacing';
+import { spacing, radius, shadows } from '../theme/spacing';
 import type { BottomTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
@@ -50,10 +51,10 @@ const tabStyles = StyleSheet.create({
     backgroundColor: colors.brandCream,
     borderWidth: 1,
     borderColor: colors.brandCreamDark,
-    shadowColor: colors.black,
+    shadowColor: 'rgba(180, 150, 80, 0.25)',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
+    shadowOpacity: 1,
+    shadowRadius: 6,
     elevation: 2,
   },
 });
@@ -70,13 +71,13 @@ export function BottomTabNavigator() {
           paddingTop: spacing[2],
           paddingBottom: spacing[2],
           height: 64,
-          shadowColor: colors.textPrimary,
+          shadowColor: 'rgba(100, 80, 30, 0.1)',
           shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
+          shadowOpacity: 1,
+          shadowRadius: 12,
           elevation: 8,
         },
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.black,
         tabBarInactiveTintColor: colors.textTertiary,
         tabBarLabelStyle: {
           fontSize: fontSizes.xs,

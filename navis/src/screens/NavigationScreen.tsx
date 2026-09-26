@@ -490,12 +490,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing[3],
     right: spacing[3],
-    backgroundColor: colors.deadReckoning,
+    backgroundColor: colors.brandCream,
     paddingHorizontal: spacing[2],
     paddingVertical: 3,
     borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
   },
-  simBadgeText: { fontSize: 9, fontWeight: fontWeights.bold, color: colors.surface, letterSpacing: 1 },
+  simBadgeText: { fontSize: 9, fontWeight: fontWeights.bold, color: colors.black, letterSpacing: 1 },
 
   markerOuter: {
     alignItems: 'center',

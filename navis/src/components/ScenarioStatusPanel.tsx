@@ -319,7 +319,7 @@ export function ScenarioStatusPanel({
                 <Text
                   style={[
                     styles.statusColVal,
-                    { color: hasFailedSensors ? '#B45309' : colors.gnssActive },
+                    { color: hasFailedSensors ? colors.textSecondary : colors.black },
                   ]}
                 >
                   {hasFailedSensors ? 'DEGRADED' : 'ACTIVE'}
@@ -621,9 +621,9 @@ const styles = StyleSheet.create({
   drTitleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F3FF',
+    backgroundColor: colors.brandCream,
     borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.3)',
+    borderColor: colors.brandCreamDark,
     borderRadius: radius.md,
     paddingHorizontal: spacing[3],
     paddingVertical: 4,
@@ -632,14 +632,14 @@ const styles = StyleSheet.create({
   drTitleText: {
     fontSize: 10,
     fontWeight: fontWeights.extrabold,
-    color: colors.secondary,
+    color: colors.black,
     letterSpacing: 0.6,
   },
   pulsingDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.black,
   },
   miniSensorsBtn: {
     flexDirection: 'row',
@@ -709,11 +709,11 @@ const styles = StyleSheet.create({
 
   // ── Adaptive Navigation Engine Box ─────────────────────────────────────────
   engineBox: {
-    backgroundColor: '#FAF5FF',
+    backgroundColor: colors.brandCreamLight,
     borderRadius: radius.lg,
     padding: 8,
     borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.25)',
+    borderColor: colors.brandCreamDark,
     gap: 6,
   },
   engineBoxHeader: {
@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
   engineBoxTitle: {
     fontSize: 8.5,
     fontWeight: fontWeights.extrabold,
-    color: colors.secondary,
+    color: colors.black,
     letterSpacing: 0.8,
   },
   engineBoxSubtitle: {

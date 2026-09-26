@@ -53,7 +53,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={splashStyles.root}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.brandCream} />
       
       {/* Background radial-like halo */}
       <Animated.View
@@ -69,7 +69,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
       {/* Main Logo Container */}
       <Animated.View style={[splashStyles.logoContainer, { opacity: fade, transform: [{ scale }] }]}>
         <View style={splashStyles.logoWrapper}>
-          <NavisLogo size="xl" variant="dark" showText={false} />
+          <NavisLogo size="xl" variant="light" showText={false} />
         </View>
       </Animated.View>
 
@@ -90,7 +90,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
             style={[
               splashStyles.dot,
               {
-                backgroundColor: i === 1 ? colors.brandCream : 'rgba(250, 237, 203, 0.45)',
+                backgroundColor: i === 1 ? colors.black : 'rgba(26, 26, 26, 0.35)',
               },
             ]}
           />
@@ -103,7 +103,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
 const splashStyles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.brandCream,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 20,
@@ -114,9 +114,9 @@ const splashStyles = StyleSheet.create({
     width: 260,
     height: 260,
     borderRadius: 130,
-    backgroundColor: 'rgba(250, 237, 203, 0.04)',
+    backgroundColor: 'rgba(0, 0, 0, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(250, 237, 203, 0.12)',
+    borderColor: 'rgba(0, 0, 0, 0.08)',
   },
   logoContainer: {
     alignItems: 'center',
@@ -125,13 +125,13 @@ const splashStyles = StyleSheet.create({
   logoWrapper: {
     padding: 12,
     borderRadius: 36,
-    backgroundColor: 'rgba(18, 18, 18, 0.9)',
+    backgroundColor: colors.black,
     borderWidth: 1.5,
-    borderColor: 'rgba(250, 237, 203, 0.35)',
-    shadowColor: colors.brandCream,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 16,
+    borderColor: colors.brandCreamDark,
+    shadowColor: 'rgba(100, 80, 30, 0.3)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 20,
     elevation: 8,
   },
   textSection: {
@@ -141,12 +141,12 @@ const splashStyles = StyleSheet.create({
   appName: {
     fontSize: fontSizes['4xl'],
     fontWeight: fontWeights.extrabold,
-    color: '#FFFFFF',
+    color: colors.black,
     letterSpacing: 10,
-    marginLeft: 10, // offsets right-side letter spacing visually
+    marginLeft: 10,
   },
   badge: {
-    backgroundColor: colors.brandCream,
+    backgroundColor: colors.black,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 100,
@@ -155,12 +155,12 @@ const splashStyles = StyleSheet.create({
   badgeText: {
     fontSize: 9,
     fontWeight: fontWeights.extrabold,
-    color: '#000000',
+    color: colors.brandCream,
     letterSpacing: 1.5,
   },
   tagline: {
     fontSize: fontSizes.xs,
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'rgba(26, 26, 26, 0.55)',
     letterSpacing: 0.8,
     marginTop: 4,
   },

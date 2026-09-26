@@ -82,7 +82,7 @@ function ModeCard({ title, subtitle, description, features, buttonLabel, onPress
 export function ModeSelectionScreen({ navigation }: Props) {
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <NavigationHeader title="Choose Mode" onBack={() => navigation.goBack()} />
 
       <ScrollView
@@ -130,7 +130,7 @@ export function ModeSelectionScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.white },
+  root: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
   content: {
     paddingHorizontal: spacing[5],

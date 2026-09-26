@@ -92,8 +92,8 @@ export function SimulationStatus({ frame, isPresentationMode }: SimulationStatus
           <View style={styles.sensorItem}>
             <Text style={styles.sensorLabel}>GNSS</Text>
             <View style={styles.sensorStatusWrap}>
-              <View style={[styles.statusDot, { backgroundColor: '#EF4444' }]} />
-              <Text style={[styles.sensorStatusVal, { color: '#DC2626' }]}>LOST</Text>
+              <View style={[styles.statusDot, { backgroundColor: colors.textTertiary }]} />
+              <Text style={[styles.sensorStatusVal, { color: colors.textSecondary }]}>LOST</Text>
             </View>
           </View>
 
@@ -102,8 +102,8 @@ export function SimulationStatus({ frame, isPresentationMode }: SimulationStatus
           <View style={styles.sensorItem}>
             <Text style={styles.sensorLabel}>IMU / INS</Text>
             <View style={styles.sensorStatusWrap}>
-              <View style={[styles.statusDot, { backgroundColor: '#10B981' }]} />
-              <Text style={[styles.sensorStatusVal, { color: '#059669' }]}>ACTIVE</Text>
+              <View style={[styles.statusDot, { backgroundColor: colors.black }]} />
+              <Text style={[styles.sensorStatusVal, { color: colors.black }]}>ACTIVE</Text>
             </View>
           </View>
 
@@ -111,7 +111,7 @@ export function SimulationStatus({ frame, isPresentationMode }: SimulationStatus
 
           <View style={styles.sensorItem}>
             <Text style={styles.sensorLabel}>TIME W/O GNSS</Text>
-            <Text style={[styles.sensorStatusVal, { color: '#7C3AED' }]}>{formattedOutageTime}</Text>
+            <Text style={[styles.sensorStatusVal, { color: colors.black }]}>{formattedOutageTime}</Text>
           </View>
         </View>
 
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: '#10B981',
+    backgroundColor: colors.black,
   },
   gnssAvailableText: {
     fontSize: fontSizes.xs,

@@ -340,8 +340,8 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   floatingTabWithFault: {
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-    backgroundColor: '#FFFFFF',
+    borderColor: colors.brandCreamDark,
+    backgroundColor: colors.surface,
   },
   floatingTabLeft: {
     flexDirection: 'row',
@@ -431,15 +431,15 @@ const styles = StyleSheet.create({
   },
   countBadgeNormal: {
     backgroundColor: colors.primarySurface,
-    borderColor: 'rgba(99, 102, 241, 0.2)',
+    borderColor: colors.brandCreamDark,
   },
   countBadgeWarning: {
-    backgroundColor: colors.warningSurface,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    backgroundColor: colors.brandCream,
+    borderColor: colors.brandCreamDark,
   },
   countBadgeDanger: {
-    backgroundColor: colors.dangerSurface,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    backgroundColor: colors.surfaceSecondary,
+    borderColor: colors.border,
   },
   disabledCountText: {
     fontSize: 10,
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   countTextNormal: { color: colors.primaryDark },
-  countTextWarning: { color: '#B45309' },
+  countTextWarning: { color: colors.black },
   countTextDanger: { color: colors.danger },
   closeBtn: {
     width: 28,
@@ -473,19 +473,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[2],
-    backgroundColor: colors.warningSurface,
+    backgroundColor: colors.brandCreamLight,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2] + 2,
     borderRadius: radius.md,
     borderLeftWidth: 3.5,
-    borderLeftColor: colors.warning,
+    borderLeftColor: colors.brandCreamDark,
   },
   warningIcon: { fontSize: 14 },
   warningText: {
     flex: 1,
     fontSize: 11,
     fontWeight: fontWeights.semibold,
-    color: '#92400E',
+    color: colors.textPrimary,
     lineHeight: 16,
   },
 
@@ -504,12 +504,12 @@ const styles = StyleSheet.create({
     borderColor: colors.borderLight,
   },
   sensorCardFailed: {
-    backgroundColor: colors.dangerSurface,
-    borderColor: 'rgba(239, 68, 68, 0.25)',
+    backgroundColor: colors.gray100,
+    borderColor: colors.border,
   },
   sensorCardRestoring: {
-    backgroundColor: colors.warningSurface,
-    borderColor: 'rgba(245, 158, 11, 0.25)',
+    backgroundColor: colors.brandCreamLight,
+    borderColor: colors.brandCreamDark,
   },
   sensorCardLeft: {
     flexDirection: 'row',
@@ -571,9 +571,9 @@ const styles = StyleSheet.create({
     marginLeft: spacing[2],
   },
   btnDisable: {
-    backgroundColor: colors.dangerSurface,
+    backgroundColor: colors.surfaceSecondary,
     borderWidth: 1.2,
-    borderColor: 'rgba(239, 68, 68, 0.4)',
+    borderColor: colors.border,
     paddingHorizontal: spacing[3] + 2,
     paddingVertical: 7,
     borderRadius: radius.lg,

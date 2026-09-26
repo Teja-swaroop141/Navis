@@ -1,5 +1,6 @@
 /**
  * NavigationHeader — top app bar with back button and title
+ * Styled to match warm cream app aesthetic
  */
 
 import React from 'react';
@@ -36,7 +37,7 @@ export function NavigationHeader({ title, onBack, right, transparent = false }: 
 
   return (
     <LinearGradient
-      colors={[colors.gradientStart, colors.gradientMiddle, '#FFFFFF']}
+      colors={[colors.gradientStart, colors.gradientMiddle, colors.surface]}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
       style={styles.container}
@@ -79,12 +80,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: spacing[1],
-  },
-  backIcon: {
-    fontSize: 28,
-    color: colors.primary,
-    fontWeight: '300',
-    lineHeight: 32,
   },
   title: {
     ...textStyles.headingSmall,
