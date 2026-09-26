@@ -40,9 +40,9 @@ export function NavisLogo({
 
   // Visual tones
   const emblemBg = isDark ? colors.blackSoft : isCream ? colors.brandCream : colors.black;
-  const emblemBorder = isDark ? colors.brandCream : isCream ? colors.black : colors.brandCream;
-  const textColor = isDark ? colors.white : isCream ? colors.black : colors.black;
-  const accentColor = isDark ? colors.brandCream : isCream ? colors.black : colors.brandCream;
+  const emblemBorder = isDark ? colors.brandCream : isCream ? colors.brandCreamDark : colors.brandCream;
+  const textColor = isDark ? colors.white : colors.black;
+  const accentColor = isDark ? colors.brandCream : isCream ? colors.brandCreamDark : colors.brandCream;
   const subtitleColor = isDark ? colors.brandCreamDark : colors.textTertiary;
 
   return (

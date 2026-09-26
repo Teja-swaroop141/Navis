@@ -2,7 +2,7 @@
  * ModeSelectionScreen
  *
  * Lets the user choose between Live Sensor Mode and Demonstration Mode.
- * Strictly styled in #FAEDCB, White, and Black.
+ * Strictly styled in #FAEDCB, Pure White, and Obsidian Black.
  */
 
 import React, { useRef, useEffect } from 'react';
@@ -53,15 +53,17 @@ function ModeCard({ title, subtitle, description, features, buttonLabel, onPress
           <Text style={styles.featuredBadgeText}>RECOMMENDED FOR DEMOS</Text>
         </View>
       )}
-      <Text style={[styles.modeTitle, featured && styles.modeTitleFeatured]}>{title}</Text>
-      <Text style={[styles.modeSubtitle, featured && styles.modeSubtitleFeatured]}>{subtitle}</Text>
-      <Text style={[styles.modeDesc, featured && styles.modeDescFeatured]}>{description}</Text>
+      <Text style={styles.modeTitle}>{title}</Text>
+      <Text style={styles.modeSubtitle}>{subtitle}</Text>
+      <Text style={styles.modeDesc}>{description}</Text>
 
       <View style={styles.featureList}>
         {features.map((f) => (
           <View key={f} style={styles.featureItem}>
-            <Feather name="check" size={13} color={featured ? colors.brandCream : colors.black} />
-            <Text style={[styles.featureLabel, featured && styles.featureLabelFeatured]}>{f}</Text>
+            <View style={styles.checkIconWrap}>
+              <Feather name="check" size={12} color={colors.black} />
+            </View>
+            <Text style={styles.featureLabel}>{f}</Text>
           </View>
         ))}
       </View>
@@ -71,7 +73,7 @@ function ModeCard({ title, subtitle, description, features, buttonLabel, onPress
         onPress={onPress}
         activeOpacity={0.85}
       >
-        <Text style={[styles.modeButtonText, featured && styles.modeButtonTextFeatured]}>
+        <Text style={styles.modeButtonText}>
           {buttonLabel}
         </Text>
       </TouchableOpacity>
@@ -150,18 +152,19 @@ const styles = StyleSheet.create({
   },
 
   modeCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: radius['2xl'],
     padding: spacing[6],
     borderWidth: 1.5,
-    borderColor: colors.black,
+    borderColor: colors.borderLight,
     gap: spacing[4],
     ...shadows.sm,
   },
   featuredCard: {
-    backgroundColor: colors.black,
-    borderColor: colors.brandCream,
-    ...shadows.lg,
+    backgroundColor: colors.surface,
+    borderColor: colors.brandCreamDark,
+    borderWidth: 2,
+    ...shadows.md,
   },
   featuredBadge: {
     alignSelf: 'flex-start',
@@ -169,6 +172,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: colors.brandCream,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
     paddingHorizontal: spacing[3],
     paddingVertical: 4,
     borderRadius: radius.full,
@@ -183,32 +188,38 @@ const styles = StyleSheet.create({
     ...textStyles.headingMedium,
     color: colors.black,
   },
-  modeTitleFeatured: { color: colors.white },
   modeSubtitle: {
     ...textStyles.bodySmall,
     color: colors.textSecondary,
     fontWeight: fontWeights.medium,
     marginTop: -spacing[2],
   },
-  modeSubtitleFeatured: { color: colors.brandCream },
   modeDesc: {
     ...textStyles.bodyMedium,
     color: colors.textSecondary,
     lineHeight: 22,
   },
-  modeDescFeatured: { color: 'rgba(255, 255, 255, 0.8)' },
 
   featureList: { gap: spacing[2] },
   featureItem: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
+  checkIconWrap: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.brandCreamLight,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   featureLabel: {
     ...textStyles.bodySmall,
-    color: colors.textSecondary,
+    color: colors.textPrimary,
     fontWeight: fontWeights.medium,
   },
-  featureLabelFeatured: { color: 'rgba(255, 255, 255, 0.9)' },
 
   modeButton: {
-    backgroundColor: colors.brandCream,
+    backgroundColor: colors.white,
     borderRadius: radius.xl,
     paddingVertical: spacing[4],
     alignItems: 'center',
@@ -219,15 +230,13 @@ const styles = StyleSheet.create({
   modeButtonFeatured: {
     backgroundColor: colors.brandCream,
     borderColor: colors.brandCreamDark,
+    ...shadows.sm,
   },
   modeButtonText: {
     ...textStyles.labelLarge,
     fontWeight: fontWeights.extrabold,
     color: colors.black,
     letterSpacing: 0.5,
-  },
-  modeButtonTextFeatured: {
-    color: colors.black,
   },
   spacer: { height: spacing[8] },
 });

@@ -162,9 +162,9 @@ const mapStyles = StyleSheet.create({
     borderRadius: radius.xl,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#000000',
+    backgroundColor: colors.surfaceSecondary,
     borderWidth: 1.5,
-    borderColor: 'rgba(250, 237, 203, 0.45)',
+    borderColor: colors.brandCreamDark,
   },
   gridLayer: {
     position: 'absolute',
@@ -181,7 +181,7 @@ const mapStyles = StyleSheet.create({
     height: 170,
     borderRadius: 85,
     borderWidth: 1,
-    borderColor: 'rgba(250, 237, 203, 0.15)',
+    borderColor: 'rgba(180, 150, 80, 0.25)',
   },
   gridCircleMiddle: {
     position: 'absolute',
@@ -189,7 +189,7 @@ const mapStyles = StyleSheet.create({
     height: 110,
     borderRadius: 55,
     borderWidth: 1,
-    borderColor: 'rgba(250, 237, 203, 0.22)',
+    borderColor: 'rgba(180, 150, 80, 0.35)',
   },
   gridCircleInner: {
     position: 'absolute',
@@ -197,21 +197,21 @@ const mapStyles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: 'rgba(250, 237, 203, 0.3)',
+    borderColor: 'rgba(180, 150, 80, 0.5)',
   },
   crosshairH: {
     position: 'absolute',
     left: 20,
     right: 20,
     height: 1,
-    backgroundColor: 'rgba(250, 237, 203, 0.12)',
+    backgroundColor: 'rgba(180, 150, 80, 0.2)',
   },
   crosshairV: {
     position: 'absolute',
     top: 20,
     bottom: 20,
     width: 1,
-    backgroundColor: 'rgba(250, 237, 203, 0.12)',
+    backgroundColor: 'rgba(180, 150, 80, 0.2)',
   },
   radarSweep: {
     position: 'absolute',
@@ -220,7 +220,7 @@ const mapStyles = StyleSheet.create({
     width: 90,
     height: 2,
     backgroundColor: colors.brandCream,
-    opacity: 0.6,
+    opacity: 0.7,
     transformOrigin: 'left center',
   },
   routeGNSS: {
@@ -230,9 +230,9 @@ const mapStyles = StyleSheet.create({
     right: 120,
     height: 3,
     borderRadius: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.black,
     transform: [{ rotate: '-14deg' }],
-    opacity: 0.85,
+    opacity: 0.9,
   },
   routeDR: {
     position: 'absolute',
@@ -241,7 +241,7 @@ const mapStyles = StyleSheet.create({
     right: 40,
     height: 3,
     borderRadius: 2,
-    backgroundColor: colors.brandCream,
+    backgroundColor: '#C4A64B',
     transform: [{ rotate: '-6deg' }],
     opacity: 0.95,
   },
@@ -253,7 +253,7 @@ const mapStyles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     borderWidth: 1.5,
-    borderColor: colors.brandCream,
+    borderColor: colors.brandCreamDark,
     marginTop: -25,
     marginLeft: -25,
   },
@@ -266,25 +266,21 @@ const mapStyles = StyleSheet.create({
     marginTop: -15,
   },
   markerArrow: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: colors.brandCream,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.white,
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: colors.black,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.brandCream,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 4,
+    ...shadows.sm,
   },
   markerPulseDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.brandCream,
+    backgroundColor: colors.black,
     marginTop: 4,
   },
   labelGNSS: {
@@ -294,23 +290,24 @@ const mapStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: colors.white,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.borderLight,
+    ...shadows.sm,
   },
   labelDotGNSS: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#000000',
+    backgroundColor: colors.black,
   },
   labelTextGNSS: {
     fontSize: 9,
     fontWeight: fontWeights.extrabold,
-    color: '#000000',
+    color: colors.black,
     letterSpacing: 0.6,
   },
   labelDR: {
@@ -326,17 +323,18 @@ const mapStyles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.brandCreamDark,
+    ...shadows.sm,
   },
   labelDotDR: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#000000',
+    backgroundColor: colors.black,
   },
   labelTextDR: {
     fontSize: 9,
     fontWeight: fontWeights.extrabold,
-    color: '#000000',
+    color: colors.black,
     letterSpacing: 0.6,
   },
   coordinateOverlay: {
@@ -347,7 +345,7 @@ const mapStyles = StyleSheet.create({
   coordinateText: {
     fontSize: 9,
     fontFamily: 'monospace',
-    color: 'rgba(250, 237, 203, 0.75)',
+    color: colors.textSecondary,
     letterSpacing: 0.5,
   },
 });
@@ -450,7 +448,7 @@ export function HomeScreen({ navigation }: Props) {
             icon={<Feather name="play-circle" size={16} color={colors.black} />}
           />
 
-          {/* 3D Tunnel Simulation Banner (Executive Obsidian & Cream) */}
+          {/* 3D Tunnel Simulation Banner (Floating White Card & Cream Icon) */}
           <TouchableOpacity
             style={styles.simulationBanner}
             onPress={() => navigation.navigate('Simulation')}
@@ -472,7 +470,7 @@ export function HomeScreen({ navigation }: Props) {
                 </Text>
               </View>
             </View>
-            <Feather name="arrow-right" size={20} color={colors.brandCream} />
+            <Feather name="chevron-right" size={20} color={colors.black} />
           </TouchableOpacity>
 
           {/* Sensor Failure Scenarios Banner (White Card & Cream Border) */}
@@ -641,18 +639,18 @@ const styles = StyleSheet.create({
 
   ctaSection: { gap: spacing[3] },
 
-  // Executive Black Simulation Banner
+  // Simulation & Scenario Floating White Cards
   simulationBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#000000',
-    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderRadius: radius['2xl'],
     padding: spacing[4],
     borderWidth: 1.5,
-    borderColor: 'rgba(250, 237, 203, 0.5)',
+    borderColor: colors.border,
     marginTop: spacing[2],
-    ...shadows.md,
+    ...shadows.sm,
   },
   simulationBannerLeft: {
     flexDirection: 'row',
@@ -661,10 +659,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   simulationBannerIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.lg,
+    width: 44,
+    height: 44,
+    borderRadius: radius.xl,
     backgroundColor: colors.brandCream,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -679,14 +679,16 @@ const styles = StyleSheet.create({
   },
   simulationBannerTitle: {
     ...textStyles.labelLarge,
-    color: colors.white,
+    color: colors.black,
     fontWeight: fontWeights.bold,
   },
   simPill: {
     backgroundColor: colors.brandCream,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
   },
   simPillText: {
     fontSize: 8,
@@ -696,7 +698,7 @@ const styles = StyleSheet.create({
   },
   simulationBannerSubtitle: {
     fontSize: fontSizes.xs,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.textSecondary,
     lineHeight: 16,
   },
 
@@ -705,18 +707,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.white,
-    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderRadius: radius['2xl'],
     padding: spacing[4],
     borderWidth: 1.5,
     borderColor: colors.border,
     ...shadows.sm,
   },
   scenarioBannerIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.lg,
+    width: 44,
+    height: 44,
+    borderRadius: radius.xl,
     backgroundColor: colors.brandCream,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -726,15 +730,17 @@ const styles = StyleSheet.create({
     fontWeight: fontWeights.bold,
   },
   scenarioPill: {
-    backgroundColor: colors.black,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
+    backgroundColor: colors.brandCreamLight,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
   },
   scenarioPillText: {
     fontSize: 8,
     fontWeight: fontWeights.extrabold,
-    color: colors.brandCream,
+    color: colors.black,
     letterSpacing: 0.6,
   },
   scenarioBannerSubtitle: {

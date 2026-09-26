@@ -146,10 +146,11 @@ const styles = StyleSheet.create({
   },
 
   tunnelActiveContainer: {
-    backgroundColor: colors.black,
-    borderColor: colors.brandCream,
-    gap: spacing[2],
-    ...shadows.md,
+    backgroundColor: colors.surface,
+    borderColor: colors.brandCreamDark,
+    borderRadius: radius['2xl'],
+    gap: spacing[3],
+    ...shadows.sm,
   },
   headerRow: {
     flexDirection: 'row',
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
   },
   subText: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: colors.textSecondary,
     letterSpacing: 0.2,
   },
   timeGroup: {
@@ -194,19 +195,19 @@ const styles = StyleSheet.create({
   timeLabel: {
     fontSize: 8,
     fontWeight: fontWeights.bold,
-    color: colors.brandCream,
+    color: colors.textTertiary,
     letterSpacing: 0.6,
   },
   timeValue: {
     fontSize: fontSizes.sm,
     fontWeight: fontWeights.extrabold,
-    color: colors.white,
+    color: colors.black,
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
   },
   progressBarBackground: {
     height: 7,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: colors.surfaceSecondary,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -214,6 +215,8 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: colors.brandCream,
     borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
   },
   footerRow: {
     flexDirection: 'row',
@@ -222,17 +225,17 @@ const styles = StyleSheet.create({
   },
   metricText: {
     fontSize: 10,
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.textSecondary,
     letterSpacing: 0.2,
   },
   metricHighlight: {
-    color: colors.white,
+    color: colors.black,
     fontWeight: fontWeights.bold,
   },
   percentText: {
     fontSize: 11,
     fontWeight: fontWeights.bold,
-    color: colors.brandCream,
+    color: colors.black,
     fontVariant: ['tabular-nums'],
   },
 });

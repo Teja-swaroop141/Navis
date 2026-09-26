@@ -19,6 +19,7 @@ import { NavigationProvider } from './src/state/NavigationContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { colors } from './src/theme/colors';
 import { fontWeights, fontSizes } from './src/theme/typography';
+import { shadows } from './src/theme/spacing';
 import { NavisLogo } from './src/components/NavisLogo';
 
 // ─── Professional Splash Screen ───────────────────────────────────────────────
@@ -69,7 +70,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
       {/* Main Logo Container */}
       <Animated.View style={[splashStyles.logoContainer, { opacity: fade, transform: [{ scale }] }]}>
         <View style={splashStyles.logoWrapper}>
-          <NavisLogo size="xl" variant="light" showText={false} />
+          <NavisLogo size="xl" variant="cream" showText={false} />
         </View>
       </Animated.View>
 
@@ -90,7 +91,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
             style={[
               splashStyles.dot,
               {
-                backgroundColor: i === 1 ? colors.black : 'rgba(26, 26, 26, 0.35)',
+                backgroundColor: i === 1 ? colors.black : colors.brandCreamDark,
               },
             ]}
           />
@@ -103,7 +104,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
 const splashStyles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.brandCream,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 20,
@@ -111,28 +112,24 @@ const splashStyles = StyleSheet.create({
   },
   halo: {
     position: 'absolute',
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: 'rgba(0, 0, 0, 0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.08)',
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: colors.brandCreamLight,
+    borderWidth: 1.5,
+    borderColor: colors.brandCreamDark,
   },
   logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoWrapper: {
-    padding: 12,
-    borderRadius: 36,
-    backgroundColor: colors.black,
-    borderWidth: 1.5,
+    padding: 16,
+    borderRadius: 40,
+    backgroundColor: colors.white,
+    borderWidth: 2,
     borderColor: colors.brandCreamDark,
-    shadowColor: 'rgba(100, 80, 30, 0.3)',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 8,
+    ...shadows.lg,
   },
   textSection: {
     alignItems: 'center',
@@ -146,21 +143,24 @@ const splashStyles = StyleSheet.create({
     marginLeft: 10,
   },
   badge: {
-    backgroundColor: colors.black,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    backgroundColor: colors.brandCream,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
     borderRadius: 100,
     marginTop: 4,
+    ...shadows.sm,
   },
   badgeText: {
     fontSize: 9,
     fontWeight: fontWeights.extrabold,
-    color: colors.brandCream,
+    color: colors.black,
     letterSpacing: 1.5,
   },
   tagline: {
     fontSize: fontSizes.xs,
-    color: 'rgba(26, 26, 26, 0.55)',
+    color: colors.textSecondary,
     letterSpacing: 0.8,
     marginTop: 4,
   },

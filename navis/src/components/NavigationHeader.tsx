@@ -37,7 +37,7 @@ export function NavigationHeader({ title, onBack, right, transparent = false }: 
 
   return (
     <LinearGradient
-      colors={[colors.gradientStart, colors.gradientMiddle, colors.surface]}
+      colors={[colors.brandCream, colors.brandCreamLight, colors.background]}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
       style={styles.container}
@@ -88,6 +88,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   titleDark: {
-    color: colors.surface,
+    color: colors.textPrimary,
   },
 });

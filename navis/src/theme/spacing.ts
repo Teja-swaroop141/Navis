@@ -26,34 +26,34 @@ export const radius = {
   full: 9999,
 };
 
-// Warm-toned shadows matching the reference cream app aesthetic
+// Subtle warm-tinted shadows matching the reference cream app aesthetic
 export const shadows = {
   sm: {
-    shadowColor: 'rgba(180, 150, 80, 0.18)',
+    shadowColor: 'rgba(120, 95, 40, 0.08)',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 2,
   },
   md: {
-    shadowColor: 'rgba(100, 80, 30, 0.14)',
+    shadowColor: 'rgba(120, 95, 40, 0.10)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowRadius: 12,
+    elevation: 3,
   },
   lg: {
-    shadowColor: 'rgba(80, 60, 20, 0.12)',
+    shadowColor: 'rgba(120, 95, 40, 0.12)',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 1,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowRadius: 20,
+    elevation: 6,
   },
   xl: {
-    shadowColor: 'rgba(60, 40, 10, 0.14)',
-    shadowOffset: { width: 0, height: 16 },
+    shadowColor: 'rgba(120, 95, 40, 0.14)',
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 1,
-    shadowRadius: 40,
-    elevation: 16,
+    shadowRadius: 28,
+    elevation: 10,
   },
 };
