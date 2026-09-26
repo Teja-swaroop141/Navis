@@ -414,10 +414,10 @@ function buildSimulationHtml(center: LatLng, disableForkDecision: boolean): stri
       <div class="decision-row">
         <div class="decision-text">
           <div style="margin-bottom: 4px;">
-            <span class="decision-highlight">DECISION:</span> Stay on <span class="decision-highlight">RIGHT MAIN TUBE (NH 275)</span>
+            <span class="decision-highlight">DECISION:</span> Stay on <span class="decision-highlight">LEFT MAIN TUBE (NH 275)</span>
           </div>
           <div style="color: #f87171; font-size: 10px;">
-            REJECTED: Left Exit 4B Bypass (Off-route dead end)
+            REJECTED: Right Exit 4B Bypass (Off-route dead end)
           </div>
         </div>
       </div>
@@ -426,15 +426,15 @@ function buildSimulationHtml(center: LatLng, disableForkDecision: boolean): stri
         <span class="heuristics-title">WHY WAS THIS DECISION MADE? (SENSOR FUSION)</span>
         <div class="heuristic-item">
           <span class="heuristic-bullet">1.</span>
-          <span><b>Gyroscope (ω_z = +0.038 rad/s):</b> Yaw rate detects rightward curvature entering the planned expressway tube.</span>
+          <span><b>Gyroscope (ω_z = −0.038 rad/s):</b> Yaw rate detects leftward curvature entering the planned expressway tube.</span>
         </div>
         <div class="heuristic-item">
           <span class="heuristic-bullet">2.</span>
-          <span><b>Accelerometer (Speed 48 km/h):</b> Continuous cruising speed profile, confirming no off-ramp deceleration.</span>
+          <span><b>Accelerometer (Speed 72 km/h):</b> Continuous cruising speed profile, confirming no off-ramp deceleration.</span>
         </div>
         <div class="heuristic-item">
           <span class="heuristic-bullet">3.</span>
-          <span><b>Magnetometer (Heading 274° → 288°):</b> Azimuth tracks the planned expressway bearing.</span>
+          <span><b>Magnetometer (Heading 274° → 260°):</b> Azimuth tracks the planned expressway bearing.</span>
         </div>
       </div>
 
@@ -729,14 +729,14 @@ function buildSimulationHtml(center: LatLng, disableForkDecision: boolean): stri
 
       fctx.fillStyle = '#ef4444';
       fctx.font = 'bold 44px Arial, sans-serif';
-      fctx.fillText('⬅ EXIT 4B [BYPASS / REJECTED]', 28, 100);
+      fctx.fillText('➡ EXIT 4B [BYPASS / REJECTED]', 28, 100);
 
       fctx.fillStyle = '#10b981';
-      fctx.fillText('MAIN ROUTE · NH 275 [CHOSEN] ➡', 500, 100);
+      fctx.fillText('MAIN ROUTE · NH 275 [CHOSEN] ⬅', 500, 100);
 
       fctx.fillStyle = '#fde68a';
       fctx.font = 'bold 30px Arial, sans-serif';
-      fctx.fillText('DEAD RECKONING ACTIVE — SENSORS DETECT RIGHT TUBE CURVE', 45, 190);
+      fctx.fillText('DEAD RECKONING ACTIVE — SENSORS DETECT LEFT TUBE CURVE', 45, 190);
 
       var forkSignTex = new THREE.CanvasTexture(forkCanvas);
       var forkSignMat = new THREE.MeshBasicMaterial({ map: forkSignTex });
@@ -1437,11 +1437,11 @@ function buildSimulationHtml(center: LatLng, disableForkDecision: boolean): stri
       if (modal) modal.style.display = 'none';
 
       isPausedForDecision = false;
-      simData.speedKmh = 48;
+      simData.speedKmh = 72;
 
       var hudSpeed = document.getElementById('hud-speed');
       if (hudSpeed) {
-        hudSpeed.textContent = '48 km/h';
+        hudSpeed.textContent = '72 km/h';
         hudSpeed.style.color = '#38bdf8';
       }
 
@@ -1456,7 +1456,7 @@ function buildSimulationHtml(center: LatLng, disableForkDecision: boolean): stri
       carZ: 10,
       carX: 0,
       carHeading: 0,
-      speedKmh: 48,
+      speedKmh: 72,
       state: 'GNSS_ACTIVE',
       isInsideTunnel: false,
       isApproachingTunnel: false,
@@ -1603,7 +1603,7 @@ function buildSimulationHtml(center: LatLng, disableForkDecision: boolean): stri
       simData.isApproachingTunnel = !!data.isApproachingTunnel;
       simData.driftMeters = data.driftMeters || 0;
       if (!isPausedForDecision) {
-        simData.speedKmh = data.speedKmh || 48;
+        simData.speedKmh = data.speedKmh || 72;
       }
 
       // Update HUD elements

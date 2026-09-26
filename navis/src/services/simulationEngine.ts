@@ -253,8 +253,8 @@ export class SimulationEngine {
   private tick(dt: number): void {
     if (this.isPaused || this.state === 'IDLE' || this.state === 'COMPLETED') return;
 
-    // Advance vehicle along route (virtual speed calibration: ~35m/s effective rate so route finishes in ~32s)
-    const effectiveVirtualSpeed = 38 * this.speedMultiplier;
+    // Advance vehicle along route (virtual speed calibration: ~55m/s effective rate so route finishes in ~20s)
+    const effectiveVirtualSpeed = 58 * this.speedMultiplier;
     this.currentDistance += effectiveVirtualSpeed * dt;
 
     if (this.currentDistance >= this.totalDistance) {
