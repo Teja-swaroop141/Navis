@@ -247,9 +247,9 @@ function HeadingCard({ heading, pitch, roll, isActive }: {
 const headStyles = StyleSheet.create({
   compassContainer: { width: 70, height: 70, alignItems: 'center', justifyContent: 'center' },
   compass: { width: 60, height: 60, alignItems: 'center', justifyContent: 'center' },
-  compassN: { fontSize: 11, fontWeight: fontWeights.bold, color: colors.danger, marginBottom: 2 },
+  compassN: { fontSize: 11, fontWeight: fontWeights.bold, color: colors.black, marginBottom: 2 },
   compassS: { fontSize: 10, fontWeight: fontWeights.semibold, color: colors.textTertiary, marginTop: 2 },
-  needleUp: { width: 3, height: 18, backgroundColor: colors.danger, borderRadius: 2 },
+  needleUp: { width: 3, height: 18, backgroundColor: colors.black, borderRadius: 2 },
   needleDown: { width: 3, height: 14, backgroundColor: colors.textTertiary, borderRadius: 2, marginTop: 1 },
   values: { flexDirection: 'row', gap: spacing[2] },
 });

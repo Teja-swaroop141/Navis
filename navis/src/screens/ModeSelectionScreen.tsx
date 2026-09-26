@@ -2,6 +2,7 @@
  * ModeSelectionScreen
  *
  * Lets the user choose between Live Sensor Mode and Demonstration Mode.
+ * Strictly styled in #FAEDCB, White, and Black.
  */
 
 import React, { useRef, useEffect } from 'react';
@@ -13,7 +14,6 @@ import { colors } from '../theme/colors';
 import { textStyles, fontSizes, fontWeights } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
 import { NavigationHeader } from '../components/NavigationHeader';
-import { PrimaryButton } from '../components/PrimaryButton';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -49,8 +49,8 @@ function ModeCard({ title, subtitle, description, features, buttonLabel, onPress
     ]}>
       {featured && (
         <View style={styles.featuredBadge}>
-          <Feather name="star" size={10} color={colors.primaryLight} />
-          <Text style={styles.featuredBadgeText}>Recommended for Demos</Text>
+          <Feather name="star" size={11} color={colors.black} />
+          <Text style={styles.featuredBadgeText}>RECOMMENDED FOR DEMOS</Text>
         </View>
       )}
       <Text style={[styles.modeTitle, featured && styles.modeTitleFeatured]}>{title}</Text>
@@ -60,7 +60,7 @@ function ModeCard({ title, subtitle, description, features, buttonLabel, onPress
       <View style={styles.featureList}>
         {features.map((f) => (
           <View key={f} style={styles.featureItem}>
-            <Feather name="check" size={11} color={featured ? colors.primaryLight : colors.gnssActive} />
+            <Feather name="check" size={13} color={featured ? colors.brandCream : colors.black} />
             <Text style={[styles.featureLabel, featured && styles.featureLabelFeatured]}>{f}</Text>
           </View>
         ))}
@@ -82,7 +82,7 @@ function ModeCard({ title, subtitle, description, features, buttonLabel, onPress
 export function ModeSelectionScreen({ navigation }: Props) {
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
       <NavigationHeader title="Choose Mode" onBack={() => navigation.goBack()} />
 
       <ScrollView
@@ -99,9 +99,9 @@ export function ModeSelectionScreen({ navigation }: Props) {
 
         <ModeCard
           title="Live Sensor Mode"
-          subtitle="Real smartphone sensors"
-          description="Uses actual GNSS, accelerometer, gyroscope, and magnetometer data from your device."
-          features={['GNSS positioning', 'Accelerometer', 'Gyroscope', 'Magnetometer']}
+          subtitle="Real smartphone hardware sensors"
+          description="Uses live device GNSS coordinates, accelerometer, gyroscope, and magnetometer data."
+          features={['Real-time GNSS positioning', '3-Axis Accelerometer', 'Gyroscope Angular Velocity', 'Magnetic Compass Azimuth']}
           buttonLabel="Start Live Mode"
           onPress={() => navigation.navigate('Navigation', { mode: 'LIVE' })}
           delay={0}
@@ -110,12 +110,12 @@ export function ModeSelectionScreen({ navigation }: Props) {
         <ModeCard
           title="Demonstration Mode"
           subtitle="Controlled GNSS outage scenario"
-          description="Predefined walking route with automatic GNSS outage and recovery — perfect for presentations."
+          description="Predefined walking route with automatic GNSS outage and recovery — ideal for presentations."
           features={[
-            'GNSS ON → GNSS OFF',
-            'Dead Reckoning',
-            'GNSS Restored',
-            'Sensor Fusion + Correction',
+            'GNSS Active → Signal Lost Outage',
+            'Inertial Dead Reckoning Transition',
+            'GNSS Recovery & Signal Re-acquisition',
+            'Extended Kalman Filter State Fusion',
           ]}
           buttonLabel="Start Demo"
           onPress={() => navigation.navigate('Navigation', { mode: 'DEMO' })}
@@ -130,7 +130,7 @@ export function ModeSelectionScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: colors.white },
   scroll: { flex: 1 },
   content: {
     paddingHorizontal: spacing[5],
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   headerSection: { gap: spacing[2] },
   headline: {
     ...textStyles.headingLarge,
-    color: colors.textPrimary,
+    color: colors.black,
   },
   subheadline: {
     ...textStyles.bodyMedium,
@@ -150,83 +150,84 @@ const styles = StyleSheet.create({
   },
 
   modeCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: radius['2xl'],
     padding: spacing[6],
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: colors.black,
     gap: spacing[4],
     ...shadows.sm,
   },
   featuredCard: {
-    backgroundColor: colors.primaryDark,
-    borderColor: colors.primaryDark,
+    backgroundColor: colors.black,
+    borderColor: colors.brandCream,
     ...shadows.lg,
   },
   featuredBadge: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    gap: 6,
+    backgroundColor: colors.brandCream,
     paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
+    paddingVertical: 4,
     borderRadius: radius.full,
   },
   featuredBadgeText: {
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.semibold,
-    color: 'rgba(255,255,255,0.9)',
-    letterSpacing: 0.5,
+    fontSize: 9,
+    fontWeight: fontWeights.extrabold,
+    color: colors.black,
+    letterSpacing: 0.8,
   },
   modeTitle: {
     ...textStyles.headingMedium,
-    color: colors.textPrimary,
+    color: colors.black,
   },
-  modeTitleFeatured: { color: colors.surface },
+  modeTitleFeatured: { color: colors.white },
   modeSubtitle: {
     ...textStyles.bodySmall,
     color: colors.textSecondary,
     fontWeight: fontWeights.medium,
     marginTop: -spacing[2],
   },
-  modeSubtitleFeatured: { color: 'rgba(255,255,255,0.65)' },
+  modeSubtitleFeatured: { color: colors.brandCream },
   modeDesc: {
     ...textStyles.bodyMedium,
     color: colors.textSecondary,
     lineHeight: 22,
   },
-  modeDescFeatured: { color: 'rgba(255,255,255,0.75)' },
+  modeDescFeatured: { color: 'rgba(255, 255, 255, 0.8)' },
 
   featureList: { gap: spacing[2] },
   featureItem: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
-  featureCheck: {
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.bold,
-    color: colors.primary,
-    width: 16,
-  },
   featureLabel: {
     ...textStyles.bodySmall,
     color: colors.textSecondary,
     fontWeight: fontWeights.medium,
   },
-  featureLabelFeatured: { color: 'rgba(255,255,255,0.85)' },
+  featureLabelFeatured: { color: 'rgba(255, 255, 255, 0.9)' },
 
   modeButton: {
-    backgroundColor: colors.primarySurface,
+    backgroundColor: colors.brandCream,
     borderRadius: radius.xl,
     paddingVertical: spacing[4],
     alignItems: 'center',
     marginTop: spacing[2],
+    borderWidth: 1.5,
+    borderColor: colors.brandCreamDark,
   },
   modeButtonFeatured: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.brandCream,
+    borderColor: colors.brandCreamDark,
   },
   modeButtonText: {
     ...textStyles.labelLarge,
-    color: colors.primary,
+    fontWeight: fontWeights.extrabold,
+    color: colors.black,
+    letterSpacing: 0.5,
   },
-  modeButtonTextFeatured: { color: colors.primaryDark },
+  modeButtonTextFeatured: {
+    color: colors.black,
+  },
   spacer: { height: spacing[8] },
 });

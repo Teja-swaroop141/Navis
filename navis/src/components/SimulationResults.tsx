@@ -89,7 +89,7 @@ export function SimulationResults({ summary, onRunAgain }: SimulationResultsProp
         {/* Header Ribbon */}
         <View style={styles.header}>
           <View style={styles.trophyCircle}>
-            <Feather name="check-circle" size={22} color={colors.gnssActive} />
+            <Feather name="check-circle" size={22} color={colors.black} />
           </View>
           <View style={{ flex: 1 }}>
             <View style={styles.badgeRow}>
@@ -157,7 +157,7 @@ export function SimulationResults({ summary, onRunAgain }: SimulationResultsProp
         <Text style={styles.sectionHeaderTitle}>STATE TRANSITION AUDIT</Text>
         <View style={styles.stateSequence}>
           <View style={styles.stateStep}>
-            <View style={[styles.stateDot, { backgroundColor: '#6366F1' }]} />
+            <View style={[styles.stateDot, { backgroundColor: colors.simGNSS }]} />
             <View style={styles.stateInfo}>
               <Text style={styles.stateName}>1. Open Highway Approach</Text>
               <Text style={styles.stateDesc}>GNSS lock established (14 sats tracked, 0.0m drift)</Text>
@@ -168,34 +168,34 @@ export function SimulationResults({ summary, onRunAgain }: SimulationResultsProp
           <View style={styles.stateLine} />
 
           <View style={styles.stateStep}>
-            <View style={[styles.stateDot, { backgroundColor: '#EF4444' }]} />
+            <View style={[styles.stateDot, { backgroundColor: colors.danger }]} />
             <View style={styles.stateInfo}>
               <Text style={styles.stateName}>2. Tunnel Entrance Blackout</Text>
               <Text style={styles.stateDesc}>GNSS carrier lost, instant failover to IMU Dead Reckoning</Text>
             </View>
-            <Text style={[styles.stateStatus, { color: '#EF4444' }]}>OUTAGE</Text>
+            <Text style={[styles.stateStatus, { color: colors.danger }]}>OUTAGE</Text>
           </View>
 
           <View style={styles.stateLine} />
 
           <View style={styles.stateStep}>
-            <View style={[styles.stateDot, { backgroundColor: '#F59E0B' }]} />
+            <View style={[styles.stateDot, { backgroundColor: colors.simDR }]} />
             <View style={styles.stateInfo}>
               <Text style={styles.stateName}>3. Inertial Dead Reckoning</Text>
               <Text style={styles.stateDesc}>Traversed 320m tunnel on gyro heading + accelerometer speed</Text>
             </View>
-            <Text style={[styles.stateStatus, { color: '#F59E0B' }]}>ACTIVE</Text>
+            <Text style={[styles.stateStatus, { color: colors.simDR }]}>ACTIVE</Text>
           </View>
 
           <View style={styles.stateLine} />
 
           <View style={styles.stateStep}>
-            <View style={[styles.stateDot, { backgroundColor: '#10B981' }]} />
+            <View style={[styles.stateDot, { backgroundColor: colors.simFused }]} />
             <View style={styles.stateInfo}>
               <Text style={styles.stateName}>4. Exit Portal Fusion Lock</Text>
               <Text style={styles.stateDesc}>GNSS restored, Kalman filter corrected DR bias in 420ms</Text>
             </View>
-            <Text style={[styles.stateStatus, { color: '#10B981' }]}>SYNCED</Text>
+            <Text style={[styles.stateStatus, { color: colors.simFused }]}>SYNCED</Text>
           </View>
         </View>
 
@@ -284,16 +284,16 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.brandCream,
     borderWidth: 1.5,
-    borderColor: '#10B981',
+    borderColor: colors.brandCreamDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
   trophyIcon: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#10B981',
+    color: colors.black,
   },
   superTitle: {
     fontSize: 9,
@@ -302,9 +302,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   passPill: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.brandCream,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: colors.brandCreamDark,
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: radius.full,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   passText: {
     fontSize: 8,
     fontWeight: fontWeights.extrabold,
-    color: '#059669',
+    color: colors.black,
     letterSpacing: 0.5,
   },
   title: {
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.black,
     borderRadius: radius.xl,
     paddingVertical: spacing[3],
     paddingHorizontal: spacing[2],
@@ -336,18 +336,18 @@ const styles = StyleSheet.create({
   scoreValue: {
     fontSize: fontSizes.lg,
     fontWeight: fontWeights.extrabold,
-    color: colors.surface,
+    color: colors.brandCream,
   },
   scoreLabel: {
     fontSize: 8,
     fontWeight: fontWeights.bold,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(250, 237, 203, 0.7)',
     letterSpacing: 0.8,
   },
   scoreDivider: {
     width: 1,
     height: 24,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(250, 237, 203, 0.2)',
   },
   summaryCaption: {
     fontSize: fontSizes.xs,
@@ -449,21 +449,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.brandCream,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: colors.brandCreamDark,
   },
   badgeSuccessText: {
     fontSize: 9,
     fontWeight: fontWeights.bold,
-    color: '#059669',
+    color: colors.black,
   },
   checkDivider: {
     height: 1,
-    backgroundColor: 'rgba(200, 195, 235, 0.4)',
+    backgroundColor: colors.borderLight,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.black,
     borderRadius: radius.xl,
     paddingVertical: spacing[3],
     gap: 6,
@@ -504,12 +504,12 @@ const styles = StyleSheet.create({
   },
   runAgainIcon: {
     fontSize: 15,
-    color: colors.surface,
+    color: colors.brandCream,
   },
   runAgainText: {
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.bold,
-    color: colors.surface,
+    color: colors.white,
     letterSpacing: 0.8,
   },
 });

@@ -11,6 +11,7 @@ import { PerformanceScreen } from '../screens/PerformanceScreen';
 import { SimulationScreen } from '../screens/SimulationScreen';
 import { ScenariosScreen } from '../screens/ScenariosScreen';
 import { SensorFailureScenarioScreen } from '../screens/SensorFailureScenarioScreen';
+import { colors } from '../theme/colors';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -21,7 +22,7 @@ export function AppNavigator() {
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
-        contentStyle: { backgroundColor: '#FAFAFE' },
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen name="Home" component={BottomTabNavigator} />

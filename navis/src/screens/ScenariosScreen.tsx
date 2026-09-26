@@ -77,7 +77,7 @@ export function ScenariosScreen({ navigation }: Props) {
         {/* Screen Intro Header */}
         <Animated.View style={[styles.introHeader, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={styles.iconCircle}>
-            <Feather name="activity" size={24} color={colors.primary} />
+            <Feather name="activity" size={24} color={colors.black} />
           </View>
           <View style={styles.introTexts}>
             <Text style={styles.mainTitle}>Navigation Scenarios</Text>
@@ -89,7 +89,7 @@ export function ScenariosScreen({ navigation }: Props) {
 
         {/* Informative Banner */}
         <Animated.View style={[styles.bannerCard, { opacity: fadeAnim }]}>
-          <Feather name="shield" size={20} color="#4C1D95" />
+          <Feather name="shield" size={20} color={colors.black} />
           <View style={styles.bannerTexts}>
             <Text style={styles.bannerTitle}>Resilience Testing</Text>
             <Text style={styles.bannerBody}>
@@ -165,11 +165,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: radius.xl,
-    backgroundColor: colors.primarySurface,
+    backgroundColor: colors.brandCream,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.2)',
+    borderWidth: 1.5,
+    borderColor: colors.brandCreamDark,
   },
   iconEmoji: {
     fontSize: 24,

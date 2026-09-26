@@ -193,15 +193,15 @@ export function SensorFailureScenarioScreen({ navigation }: Props) {
         {/* Legend Overlay */}
         <View style={styles.legendOverlay}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendBar, { backgroundColor: '#4F46E5' }]} />
+            <View style={[styles.legendBar, { backgroundColor: colors.simGNSS }]} />
             <Text style={styles.legendText}>GNSS</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendBar, styles.legendBarDashed, { backgroundColor: '#F59E0B' }]} />
+            <View style={[styles.legendBar, styles.legendBarDashed, { backgroundColor: colors.simDR }]} />
             <Text style={styles.legendText}>DR</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendBar, { backgroundColor: '#10B981' }]} />
+            <View style={[styles.legendBar, { backgroundColor: colors.simFused }]} />
             <Text style={styles.legendText}>Fused</Text>
           </View>
         </View>
@@ -223,7 +223,7 @@ export function SensorFailureScenarioScreen({ navigation }: Props) {
             <View
               style={[
                 styles.toastDot,
-                frame.disabledSensors.length > 0 && { backgroundColor: colors.warning },
+                frame.disabledSensors.length > 0 && { backgroundColor: colors.brandCream },
               ]}
             />
             <Text style={styles.toastText} numberOfLines={1}>
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     bottom: spacing[3],
     left: spacing[3],
     right: spacing[3],
-    backgroundColor: 'rgba(15, 14, 42, 0.94)',
+    backgroundColor: 'rgba(0, 0, 0, 0.94)',
     borderRadius: radius.lg,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
@@ -389,12 +389,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.gnssActive,
+    backgroundColor: colors.brandCream,
   },
   toastText: {
     fontSize: 10.5,
     fontWeight: fontWeights.bold,
-    color: colors.surface,
+    color: colors.white,
     letterSpacing: 0.2,
     flex: 1,
   },
@@ -414,7 +414,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   startBtn: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.brandCream,
+    borderWidth: 1.5,
+    borderColor: colors.brandCreamDark,
     paddingVertical: spacing[3],
     borderRadius: radius.xl,
     flexDirection: 'row',
@@ -426,7 +428,7 @@ const styles = StyleSheet.create({
   startBtnText: {
     fontSize: 12,
     fontWeight: fontWeights.extrabold,
-    color: colors.textOnPrimary,
+    color: colors.black,
     letterSpacing: 0.8,
   },
   playbackButtonsRow: {
@@ -438,17 +440,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[2],
-    backgroundColor: colors.primarySurface,
+    backgroundColor: colors.brandCream,
     paddingHorizontal: spacing[3],
     paddingVertical: 7,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.25)',
+    borderColor: colors.brandCreamDark,
   },
   playbackBtnText: {
     fontSize: 11,
     fontWeight: fontWeights.bold,
-    color: colors.primaryDark,
+    color: colors.black,
   },
   playbackBtnSecondary: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 /**
- * PrimaryButton — main CTA button with indigo/purple gradient
+ * PrimaryButton — Main CTA button in #FAEDCB Butter Cream with bold Black typography
  */
 
 import React, { useRef } from 'react';
@@ -30,12 +30,19 @@ export function PrimaryButton({ label, onPress, loading, disabled, danger, warni
     Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50 }).start();
   };
 
-  const bgColor = danger ? colors.gnssLost : warning ? colors.deadReckoning : colors.primary;
+  const bgColor = danger ? colors.black : warning ? colors.black : colors.brandCream;
+  const textColor = danger ? colors.brandCream : warning ? colors.brandCream : colors.black;
+  const borderColor = danger ? colors.blackBorder : warning ? colors.brandCream : colors.brandCreamDark;
 
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: bgColor }, disabled && styles.disabled, style]}
+        style={[
+          styles.button,
+          { backgroundColor: bgColor, borderColor },
+          disabled && styles.disabled,
+          style,
+        ]}
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -43,11 +50,11 @@ export function PrimaryButton({ label, onPress, loading, disabled, danger, warni
         activeOpacity={0.9}
       >
         {loading ? (
-          <ActivityIndicator color={colors.textOnPrimary} size="small" />
+          <ActivityIndicator color={textColor} size="small" />
         ) : (
           <>
             {icon}
-            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.label, { color: textColor }]}>{label}</Text>
           </>
         )}
       </TouchableOpacity>
@@ -63,14 +70,21 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[6],
-    borderRadius: radius.xl,
+    borderRadius: radius['2xl'],
+    borderWidth: 1.5,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
   },
   label: {
     ...textStyles.labelLarge,
-    color: colors.textOnPrimary,
-    letterSpacing: 0.3,
+    fontWeight: '800',
+    color: colors.black,
+    letterSpacing: 0.5,
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
 });

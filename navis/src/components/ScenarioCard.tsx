@@ -2,7 +2,7 @@
  * ScenarioCard.tsx
  *
  * Card component displaying a navigation scenario.
- * Matches existing NavDR design tokens (GlassCard, PrimaryButton, typography, shadows).
+ * Matches #FAEDCB, White, and Black theme tokens.
  */
 
 import React from 'react';
@@ -29,7 +29,7 @@ export function ScenarioCard({ scenario, onRun }: ScenarioCardProps) {
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
           <View style={styles.categoryRow}>
-            <View style={[styles.categoryDot, { backgroundColor: isReady ? colors.primary : colors.gray400 }]} />
+            <View style={[styles.categoryDot, { backgroundColor: isReady ? colors.black : colors.gray400 }]} />
             <Text style={styles.categoryText}>{scenario.category.toUpperCase()}</Text>
           </View>
           <Text style={styles.title}>{scenario.title}</Text>
@@ -62,7 +62,7 @@ export function ScenarioCard({ scenario, onRun }: ScenarioCardProps) {
           <PrimaryButton
             label="Run Scenario"
             onPress={onRun}
-            icon={<Feather name="play" size={12} color={colors.surface} />}
+            icon={<Feather name="play" size={14} color={colors.black} />}
           />
         ) : (
           <TouchableOpacity
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 10,
     fontWeight: fontWeights.extrabold,
-    color: colors.primary,
+    color: colors.black,
     letterSpacing: 0.8,
   },
   title: {
@@ -126,15 +126,14 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: radius.full,
     gap: 6,
+    borderWidth: 1,
   },
   statusPillReady: {
-    backgroundColor: colors.gnssActiveSurface,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
+    backgroundColor: colors.brandCream,
+    borderColor: colors.brandCreamDark,
   },
   statusPillSoon: {
     backgroundColor: colors.gray100,
-    borderWidth: 1,
     borderColor: colors.border,
   },
   statusDot: {
@@ -143,7 +142,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusDotReady: {
-    backgroundColor: colors.gnssActive,
+    backgroundColor: colors.black,
   },
   statusDotSoon: {
     backgroundColor: colors.gray400,
@@ -154,7 +153,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   statusTextReady: {
-    color: colors.gnssActive,
+    color: colors.black,
   },
   statusTextSoon: {
     color: colors.textTertiary,
@@ -176,23 +175,21 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   tagPill: {
-    backgroundColor: colors.lavender,
+    backgroundColor: colors.brandCream,
     paddingHorizontal: spacing[3],
     paddingVertical: 4,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
   },
   tagText: {
     fontSize: 11,
-    fontWeight: fontWeights.semibold,
-    color: colors.primaryDark,
+    fontWeight: fontWeights.bold,
+    color: colors.black,
     letterSpacing: 0.2,
   },
   actionContainer: {
     marginTop: spacing[2],
-  },
-  btnIcon: {
-    fontSize: 12,
-    color: colors.surface,
   },
   disabledBtn: {
     paddingVertical: spacing[3] + 2,

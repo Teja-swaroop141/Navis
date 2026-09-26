@@ -201,8 +201,8 @@ function ControlCard({
                 onPress={onEnableGNSS}
                 activeOpacity={0.85}
               >
-                <Feather name="zap" size={14} color="#065F46" />
-                <Text style={[styles.gnssButtonText, { color: '#065F46' }]}>RESTORE GNSS</Text>
+                <Feather name="zap" size={14} color={colors.black} />
+                <Text style={[styles.gnssButtonText, { color: colors.black }]}>RESTORE GNSS</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -210,13 +210,13 @@ function ControlCard({
                 onPress={onDisableGNSS}
                 activeOpacity={0.85}
               >
-                <Feather name="wifi-off" size={14} color={colors.danger} />
-                <Text style={[styles.gnssButtonText, { color: colors.danger }]}>DISABLE GNSS</Text>
+                <Feather name="wifi-off" size={14} color={colors.white} />
+                <Text style={[styles.gnssButtonText, { color: colors.white }]}>DISABLE GNSS</Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity style={styles.stopSmallButton} onPress={onStop} activeOpacity={0.85}>
-              <Feather name="square" size={10} color={colors.textSecondary} />
+              <Feather name="square" size={10} color={colors.black} />
               <Text style={styles.stopSmallText}>END</Text>
             </TouchableOpacity>
           </View>
@@ -224,7 +224,7 @@ function ControlCard({
       ) : (
         /* LIVE mode: Stop session button */
         <TouchableOpacity style={styles.stopFullButton} onPress={onStop} activeOpacity={0.85}>
-          <Feather name="square" size={14} color={colors.danger} />
+          <Feather name="square" size={14} color={colors.white} />
           <Text style={styles.stopFullText}>STOP SESSION</Text>
         </TouchableOpacity>
       )}
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   mapContainer: {
     height: MAP_HEIGHT,
     position: 'relative',
-    backgroundColor: '#E8EBF5',
+    backgroundColor: colors.white,
   },
   map: { ...StyleSheet.absoluteFill },
 
@@ -447,12 +447,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.black,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.md,
   },
-  backOverlayText: { fontSize: 24, color: colors.primary, fontWeight: '300', lineHeight: 28 },
+  backOverlayText: { fontSize: 24, color: colors.black, fontWeight: '300', lineHeight: 28 },
 
   statusToast: {
     position: 'absolute',
@@ -572,14 +574,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
   },
   gnssButtonDisable: {
-    backgroundColor: colors.dangerSurface,
+    backgroundColor: colors.black,
     borderWidth: 1.5,
-    borderColor: '#FECACA',
+    borderColor: colors.black,
   },
   gnssButtonRestore: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.brandCream,
     borderWidth: 1.5,
-    borderColor: '#A7F3D0',
+    borderColor: colors.brandCreamDark,
   },
   gnssButtonIcon: {
     fontSize: 16,
@@ -593,15 +595,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderRadius: radius.xl,
-    backgroundColor: colors.gray100,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.black,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stopSmallText: {
     ...textStyles.labelSmall,
-    color: colors.textSecondary,
+    color: colors.black,
     fontWeight: fontWeights.bold,
   },
   stopFullButton: {
@@ -611,12 +613,14 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     paddingVertical: spacing[4],
     borderRadius: radius.xl,
-    backgroundColor: colors.dangerSurface,
+    backgroundColor: colors.black,
+    borderWidth: 1.5,
+    borderColor: colors.black,
   },
-  stopFullIcon: { fontSize: 14, color: colors.danger },
+  stopFullIcon: { fontSize: 14, color: colors.white },
   stopFullText: {
     ...textStyles.labelLarge,
-    color: colors.danger,
+    color: colors.white,
     letterSpacing: 0.6,
   },
   drNoteRow: {

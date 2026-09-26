@@ -32,7 +32,7 @@ function TabIcon({
       <Feather
         name={icon}
         size={20}
-        color={focused ? colors.primary : colors.textTertiary}
+        color={focused ? colors.black : colors.textTertiary}
       />
     </View>
   );
@@ -43,11 +43,18 @@ const tabStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: 44,
-    height: 32,
-    borderRadius: radius.lg,
+    height: 30,
+    borderRadius: radius.md,
   },
   iconWrapperActive: {
-    backgroundColor: colors.primarySurface,
+    backgroundColor: colors.brandCream,
+    borderWidth: 1,
+    borderColor: colors.brandCreamDark,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
   },
 });
 
@@ -63,6 +70,11 @@ export function BottomTabNavigator() {
           paddingTop: spacing[2],
           paddingBottom: spacing[2],
           height: 64,
+          shadowColor: colors.textPrimary,
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 8,
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textTertiary,

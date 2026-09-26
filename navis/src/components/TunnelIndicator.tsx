@@ -2,18 +2,17 @@
  * TunnelIndicator.tsx
  *
  * Dedicated visual indicator for the tunnel section:
- * - "Approaching GNSS-denied zone" advisory banner
- * - In-tunnel active progress bar: ████████░░░░░░ 62%
+ * - "Approaching GNSS-denied zone" advisory banner in #FAEDCB & Black
+ * - In-tunnel active progress bar in Obsidian Black & #FAEDCB Cream
  * - Distance progress (e.g. 184 m / 320 m)
  * - Elapsed GNSS outage timer
- * - Resilient subtle purple/indigo/amber aesthetics
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { fontSizes, fontWeights, textStyles } from '../theme/typography';
+import { fontSizes, fontWeights } from '../theme/typography';
 import { spacing, radius, shadows } from '../theme/spacing';
 
 interface TunnelIndicatorProps {
@@ -42,7 +41,7 @@ export function TunnelIndicator({
     return (
       <View style={[styles.container, styles.advisoryContainer]}>
         <View style={styles.advisoryIconCircle}>
-          <Feather name="alert-triangle" size={14} color={colors.surface} style={{ fontWeight: 'bold' as any }} />
+          <Feather name="alert-triangle" size={14} color={colors.brandCream} />
         </View>
         <View style={styles.advisoryTextWrap}>
           <Text style={styles.advisoryTitle}>Approaching GNSS-Denied Zone</Text>
@@ -99,11 +98,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     marginBottom: spacing[2],
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   advisoryContainer: {
-    backgroundColor: '#FEF9C3', // Subtle yellow/amber
-    borderColor: '#FDE047',
+    backgroundColor: colors.brandCream,
+    borderColor: colors.brandCreamDark,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
@@ -113,14 +112,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#F59E0B',
+    backgroundColor: colors.black,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  advisoryIcon: {
-    color: colors.surface,
-    fontSize: 14,
-    fontWeight: 'bold',
   },
   advisoryTextWrap: {
     flex: 1,
@@ -128,29 +122,32 @@ const styles = StyleSheet.create({
   advisoryTitle: {
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.bold,
-    color: '#92400E',
+    color: colors.black,
     letterSpacing: 0.2,
   },
   advisorySubtitle: {
     fontSize: 10,
-    color: '#B45309',
+    color: colors.black,
     marginTop: 1,
+    opacity: 0.85,
   },
   advisoryBadge: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    backgroundColor: colors.white,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
   },
   advisoryBadgeText: {
     fontSize: 10,
     fontWeight: fontWeights.bold,
-    color: '#92400E',
+    color: colors.black,
   },
 
   tunnelActiveContainer: {
-    backgroundColor: '#2D1B69', // Deep royal indigo/purple
-    borderColor: '#4C1D95',
+    backgroundColor: colors.black,
+    borderColor: colors.brandCream,
     gap: spacing[2],
     ...shadows.md,
   },
@@ -165,30 +162,30 @@ const styles = StyleSheet.create({
   tunnelPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.22)',
+    backgroundColor: colors.brandCream,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radius.full,
     alignSelf: 'flex-start',
     gap: 5,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.4)',
+    borderColor: colors.brandCreamDark,
   },
   pulsingDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#F59E0B',
+    backgroundColor: colors.black,
   },
   tunnelPillText: {
     fontSize: 9,
     fontWeight: fontWeights.extrabold,
-    color: '#FDE68A',
+    color: colors.black,
     letterSpacing: 0.8,
   },
   subText: {
     fontSize: 10,
-    color: '#C4B5FD',
+    color: 'rgba(255, 255, 255, 0.7)',
     letterSpacing: 0.2,
   },
   timeGroup: {
@@ -197,13 +194,13 @@ const styles = StyleSheet.create({
   timeLabel: {
     fontSize: 8,
     fontWeight: fontWeights.bold,
-    color: '#DDD6FE',
+    color: colors.brandCream,
     letterSpacing: 0.6,
   },
   timeValue: {
     fontSize: fontSizes.sm,
     fontWeight: fontWeights.extrabold,
-    color: colors.surface,
+    color: colors.white,
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
   },
@@ -215,7 +212,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#F59E0B', // Amber progress inside tunnel
+    backgroundColor: colors.brandCream,
     borderRadius: 4,
   },
   footerRow: {
@@ -225,17 +222,17 @@ const styles = StyleSheet.create({
   },
   metricText: {
     fontSize: 10,
-    color: '#DDD6FE',
+    color: 'rgba(255,255,255,0.7)',
     letterSpacing: 0.2,
   },
   metricHighlight: {
-    color: colors.surface,
+    color: colors.white,
     fontWeight: fontWeights.bold,
   },
   percentText: {
     fontSize: 11,
     fontWeight: fontWeights.bold,
-    color: '#FDE68A',
+    color: colors.brandCream,
     fontVariant: ['tabular-nums'],
   },
 });

@@ -1,11 +1,11 @@
 /**
- * SecondaryButton — outlined/ghost button
+ * SecondaryButton — Outlined high-contrast button in White & Black with subtle #FAEDCB hover feel
  */
 
 import React, { useRef } from 'react';
 import { TouchableOpacity, Text, StyleSheet, Animated, ViewStyle } from 'react-native';
 import { colors } from '../theme/colors';
-import { textStyles } from '../theme/typography';
+import { textStyles, fontWeights } from '../theme/typography';
 import { radius, spacing } from '../theme/spacing';
 
 interface SecondaryButtonProps {
@@ -52,15 +52,16 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     paddingVertical: spacing[4] - 2,
     paddingHorizontal: spacing[6],
-    borderRadius: radius.xl,
+    borderRadius: radius['2xl'],
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: colors.black,
+    backgroundColor: colors.white,
   },
   label: {
     ...textStyles.labelLarge,
-    color: colors.textPrimary,
-    letterSpacing: 0.3,
+    fontWeight: fontWeights.bold,
+    color: colors.black,
+    letterSpacing: 0.4,
   },
   disabled: {
     opacity: 0.4,

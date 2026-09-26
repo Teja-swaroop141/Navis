@@ -101,8 +101,8 @@ function MarkerComparison({ gnssPos, drPos, fusedPos }: {
   return (
     <View style={markerStyles.row}>
       <View style={markerStyles.markerBlock}>
-        <View style={[markerStyles.dot, { backgroundColor: colors.markerGNSS }]}>
-          <Text style={markerStyles.dotText}>G</Text>
+        <View style={[markerStyles.dot, { backgroundColor: colors.black }]}>
+          <Text style={[markerStyles.dotText, { color: colors.white }]}>G</Text>
         </View>
         <Text style={markerStyles.markerLabel}>GNSS</Text>
         <Text style={markerStyles.markerCoord}>{gnssPos?.lat.toFixed(5) ?? '--'}</Text>
@@ -110,8 +110,8 @@ function MarkerComparison({ gnssPos, drPos, fusedPos }: {
       </View>
 
       <View style={markerStyles.markerBlock}>
-        <View style={[markerStyles.dot, { backgroundColor: colors.markerDR }]}>
-          <Text style={markerStyles.dotText}>D</Text>
+        <View style={[markerStyles.dot, { backgroundColor: colors.brandCream, borderWidth: 1.5, borderColor: colors.brandCreamDark }]}>
+          <Text style={[markerStyles.dotText, { color: colors.black }]}>D</Text>
         </View>
         <Text style={markerStyles.markerLabel}>DR</Text>
         <Text style={markerStyles.markerCoord}>{drPos.lat.toFixed(5)}</Text>
@@ -119,8 +119,8 @@ function MarkerComparison({ gnssPos, drPos, fusedPos }: {
       </View>
 
       <View style={markerStyles.markerBlock}>
-        <View style={[markerStyles.dot, { backgroundColor: colors.markerFused }]}>
-          <Text style={markerStyles.dotText}>F</Text>
+        <View style={[markerStyles.dot, { backgroundColor: colors.black, borderWidth: 1.5, borderColor: colors.brandCream }]}>
+          <Text style={[markerStyles.dotText, { color: colors.brandCream }]}>F</Text>
         </View>
         <Text style={markerStyles.markerLabel}>FUSED</Text>
         <Text style={markerStyles.markerCoord}>{fusedPos?.lat.toFixed(5) ?? '--'}</Text>

@@ -95,32 +95,32 @@ function buildHtml(center: LatLng): string {
 <body>
   <div id="map" style="position: relative; width: 100%; height: 100%;">
     <!-- Instant OpenStreetMap SVG Map Fallback -->
-    <svg id="svg-map-fallback" viewBox="0 0 400 400" style="position: absolute; top:0; left:0; width:100%; height:100%; background: #f1f5f9; z-index: 1;">
-      <rect x="0" y="0" width="400" height="400" fill="#f1f5f9"/>
+    <svg id="svg-map-fallback" viewBox="0 0 400 400" style="position: absolute; top:0; left:0; width:100%; height:100%; background: #ffffff; z-index: 1;">
+      <rect x="0" y="0" width="400" height="400" fill="#ffffff"/>
       <!-- City Blocks -->
-      <rect x="20" y="20" width="160" height="120" fill="#e2e8f0" rx="8"/>
-      <rect x="210" y="20" width="170" height="90" fill="#fbcfe8" opacity="0.65" rx="8"/>
-      <text x="235" y="65" font-size="14" font-family="sans-serif" font-weight="bold" fill="#be185d">Korea Town</text>
+      <rect x="20" y="20" width="160" height="120" fill="#f5f5f5" stroke="#e5e5e5" rx="8"/>
+      <rect x="210" y="20" width="170" height="90" fill="#FAEDCB" stroke="#e5d6a7" opacity="0.85" rx="8"/>
+      <text x="235" y="65" font-size="14" font-family="sans-serif" font-weight="bold" fill="#000000">Financial District</text>
 
-      <rect x="20" y="170" width="140" height="210" fill="#e2e8f0" rx="8"/>
-      <rect x="190" y="170" width="190" height="210" fill="#dcfce7" opacity="0.75" rx="8"/>
-      <text x="230" y="270" font-size="13" font-family="sans-serif" font-weight="bold" fill="#15803d">City Park</text>
+      <rect x="20" y="170" width="140" height="210" fill="#f5f5f5" stroke="#e5e5e5" rx="8"/>
+      <rect x="190" y="170" width="190" height="210" fill="#FAEDCB" stroke="#e5d6a7" opacity="0.6" rx="8"/>
+      <text x="230" y="270" font-size="13" font-family="sans-serif" font-weight="bold" fill="#000000">Grand Plaza</text>
 
       <!-- Road Grid -->
-      <path d="M 0 150 L 400 150" stroke="#ffffff" stroke-width="26"/>
-      <path d="M 0 150 L 400 150" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6,6"/>
-      <text x="170" y="144" font-size="12" font-family="sans-serif" font-weight="bold" fill="#334155">31st Street</text>
+      <path d="M 0 150 L 400 150" stroke="#000000" stroke-width="26"/>
+      <path d="M 0 150 L 400 150" stroke="#FAEDCB" stroke-width="2" stroke-dasharray="6,6"/>
+      <text x="170" y="144" font-size="12" font-family="sans-serif" font-weight="bold" fill="#ffffff">Market Street</text>
 
-      <path d="M 170 0 L 170 400" stroke="#ffffff" stroke-width="26"/>
-      <text x="176" y="290" font-size="12" font-family="sans-serif" font-weight="bold" fill="#2563eb" transform="rotate(90, 176, 290)">33rd Street</text>
+      <path d="M 170 0 L 170 400" stroke="#000000" stroke-width="26"/>
+      <text x="176" y="290" font-size="12" font-family="sans-serif" font-weight="bold" fill="#ffffff" transform="rotate(90, 176, 290)">3rd Street</text>
 
       <!-- Route Polyline -->
-      <path id="svg-route-path" d="M 40 370 L 170 150 L 360 40" stroke="#4F46E5" stroke-width="6" stroke-linecap="round" fill="none"/>
+      <path id="svg-route-path" d="M 40 370 L 170 150 L 360 40" stroke="#FAEDCB" stroke-width="6" stroke-linecap="round" fill="none"/>
 
       <!-- Car Marker -->
       <g id="svg-marker-group" transform="translate(170, 150)">
-        <circle r="16" fill="#4F46E5" opacity="0.3"/>
-        <circle r="10" fill="#4F46E5" stroke="#ffffff" stroke-width="3"/>
+        <circle r="16" fill="#FAEDCB" opacity="0.4"/>
+        <circle r="10" fill="#000000" stroke="#FAEDCB" stroke-width="3"/>
         <text x="0" y="3.5" font-size="9" font-family="sans-serif" font-weight="bold" fill="#ffffff" text-anchor="middle">GNSS</text>
       </g>
     </svg>
@@ -171,9 +171,9 @@ function buildHtml(center: LatLng): string {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        gnssLine  = L.polyline([], { color: '#4F46E5', weight: 4.5, opacity: 0.95 }).addTo(map);
-        drLine    = L.polyline([], { color: '#F59E0B', weight: 4, opacity: 0.9, dashArray: '8, 6' }).addTo(map);
-        fusedLine = L.polyline([], { color: '#10B981', weight: 4.5, opacity: 0.95 }).addTo(map);
+        gnssLine  = L.polyline([], { color: '#000000', weight: 4.5, opacity: 0.95 }).addTo(map);
+        drLine    = L.polyline([], { color: '#FAEDCB', weight: 4.5, opacity: 1.0, dashArray: '8, 6' }).addTo(map);
+        fusedLine = L.polyline([], { color: '#000000', weight: 4.5, opacity: 0.95 }).addTo(map);
 
         setTimeout(function() { if (map) map.invalidateSize(); }, 300);
         setTimeout(function() { if (map) map.invalidateSize(); }, 1000);

@@ -3,7 +3,9 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { textStyles } from '../theme/typography';
 import { spacing } from '../theme/spacing';
@@ -16,18 +18,39 @@ interface NavigationHeaderProps {
 }
 
 export function NavigationHeader({ title, onBack, right, transparent = false }: NavigationHeaderProps) {
+  if (transparent) {
+    return (
+      <View style={[styles.container, styles.transparent]}>
+        <View style={styles.left}>
+          {onBack && (
+            <TouchableOpacity onPress={onBack} style={styles.backButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Feather name="chevron-left" size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <Text style={[styles.title, styles.titleDark]}>{title}</Text>
+        <View style={styles.right}>{right}</View>
+      </View>
+    );
+  }
+
   return (
-    <View style={[styles.container, transparent && styles.transparent]}>
+    <LinearGradient
+      colors={[colors.gradientStart, colors.gradientMiddle, '#FFFFFF']}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={styles.container}
+    >
       <View style={styles.left}>
         {onBack && (
           <TouchableOpacity onPress={onBack} style={styles.backButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.backIcon}>‹</Text>
+            <Feather name="chevron-left" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
       </View>
-      <Text style={[styles.title, transparent && styles.titleDark]}>{title}</Text>
+      <Text style={styles.title}>{title}</Text>
       <View style={styles.right}>{right}</View>
-    </View>
+    </LinearGradient>
   );
 }
 

@@ -6,6 +6,7 @@
  * - React Navigation container
  * - Safe area handling
  * - Gesture handler support
+ * - Professional #FAEDCB / White / Black Splash Screen & Theme
  */
 
 import 'react-native-gesture-handler';
@@ -18,21 +19,31 @@ import { NavigationProvider } from './src/state/NavigationContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { colors } from './src/theme/colors';
 import { fontWeights, fontSizes } from './src/theme/typography';
+import { NavisLogo } from './src/components/NavisLogo';
 
-// ─── Splash Screen ────────────────────────────────────────────────────────────
+// ─── Professional Splash Screen ───────────────────────────────────────────────
 function SplashScreen({ onDone }: { onDone: () => void }) {
   const fade = React.useRef(new Animated.Value(0)).current;
-  const scale = React.useRef(new Animated.Value(0.85)).current;
+  const scale = React.useRef(new Animated.Value(0.9)).current;
   const textFade = React.useRef(new Animated.Value(0)).current;
+  const pulse = React.useRef(new Animated.Value(0.95)).current;
 
   useEffect(() => {
+    // Pulse animation for the emblem ring
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1.05, duration: 1000, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.95, duration: 1000, useNativeDriver: true }),
+      ])
+    ).start();
+
     Animated.sequence([
       Animated.parallel([
-        Animated.timing(fade, { toValue: 1, duration: 600, useNativeDriver: true }),
-        Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 80, friction: 10 }),
+        Animated.timing(fade, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true, tension: 70, friction: 9 }),
       ]),
-      Animated.timing(textFade, { toValue: 1, duration: 400, delay: 200, useNativeDriver: true }),
-      Animated.delay(1200),
+      Animated.timing(textFade, { toValue: 1, duration: 500, delay: 150, useNativeDriver: true }),
+      Animated.delay(1400),
       Animated.parallel([
         Animated.timing(fade, { toValue: 0, duration: 500, useNativeDriver: true }),
         Animated.timing(textFade, { toValue: 0, duration: 500, useNativeDriver: true }),
@@ -42,19 +53,47 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={splashStyles.root}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primaryDark} />
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      
+      {/* Background radial-like halo */}
+      <Animated.View
+        style={[
+          splashStyles.halo,
+          {
+            transform: [{ scale: pulse }],
+            opacity: fade,
+          },
+        ]}
+      />
+
+      {/* Main Logo Container */}
       <Animated.View style={[splashStyles.logoContainer, { opacity: fade, transform: [{ scale }] }]}>
-        <View style={splashStyles.logoCircle}>
-          <Text style={splashStyles.logoIcon}>◈</Text>
+        <View style={splashStyles.logoWrapper}>
+          <NavisLogo size="xl" variant="dark" showText={false} />
         </View>
       </Animated.View>
-      <Animated.View style={{ opacity: textFade, alignItems: 'center' }}>
+
+      {/* Brand Text Section */}
+      <Animated.View style={[splashStyles.textSection, { opacity: textFade }]}>
         <Text style={splashStyles.appName}>NAVIS</Text>
-        <Text style={splashStyles.tagline}>GNSS Dead Reckoning Navigation</Text>
+        <View style={splashStyles.badge}>
+          <Text style={splashStyles.badgeText}>DEAD RECKONING ENGINE</Text>
+        </View>
+        <Text style={splashStyles.tagline}>Precision Inertial Navigation System</Text>
       </Animated.View>
+
+      {/* Elegant Loading Dots */}
       <Animated.View style={[splashStyles.dotsRow, { opacity: textFade }]}>
         {[0, 1, 2].map((i) => (
-          <View key={i} style={[splashStyles.dot, { opacity: 0.4 + i * 0.2 }]} />
+          <View
+            key={i}
+            style={[
+              splashStyles.dot,
+              {
+                backgroundColor: i === 1 ? colors.brandCream : 'rgba(250, 237, 203, 0.45)',
+              },
+            ]}
+          />
         ))}
       </Animated.View>
     </View>
@@ -64,45 +103,76 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
 const splashStyles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 24,
+    gap: 20,
+    position: 'relative',
   },
-  logoContainer: { alignItems: 'center' },
-  logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  halo: {
+    position: 'absolute',
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(250, 237, 203, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
+    borderColor: 'rgba(250, 237, 203, 0.12)',
   },
-  logoIcon: { fontSize: 48, color: colors.surface },
+  logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoWrapper: {
+    padding: 12,
+    borderRadius: 36,
+    backgroundColor: 'rgba(18, 18, 18, 0.9)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(250, 237, 203, 0.35)',
+    shadowColor: colors.brandCream,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  textSection: {
+    alignItems: 'center',
+    gap: 8,
+  },
   appName: {
-    fontSize: fontSizes['3xl'],
+    fontSize: fontSizes['4xl'],
     fontWeight: fontWeights.extrabold,
-    color: colors.surface,
-    letterSpacing: 8,
+    color: '#FFFFFF',
+    letterSpacing: 10,
+    marginLeft: 10, // offsets right-side letter spacing visually
+  },
+  badge: {
+    backgroundColor: colors.brandCream,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 100,
+    marginTop: 4,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: fontWeights.extrabold,
+    color: '#000000',
+    letterSpacing: 1.5,
   },
   tagline: {
-    fontSize: fontSizes.sm,
-    color: 'rgba(255,255,255,0.65)',
-    letterSpacing: 1,
-    marginTop: 8,
+    fontSize: fontSizes.xs,
+    color: 'rgba(255, 255, 255, 0.6)',
+    letterSpacing: 0.8,
+    marginTop: 4,
   },
   dotsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 12,
+    marginTop: 18,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.surface,
   },
 });
 

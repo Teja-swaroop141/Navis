@@ -142,26 +142,28 @@ function MiniTrajectory({ trajectory }: { trajectory: Array<{ x: number; y: numb
 
 const miniTrajStyles = StyleSheet.create({
   canvas: {
-    backgroundColor: '#EEF0F8',
+    backgroundColor: colors.gray100,
     borderRadius: radius.lg,
     position: 'relative',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
   segment: {
     position: 'absolute',
-    height: 2.5,
-    backgroundColor: colors.trajectoryDR,
+    height: 3,
+    backgroundColor: colors.brandCreamDark,
     borderRadius: 1.5,
     transformOrigin: 'left center',
   },
   currentDot: {
     position: 'absolute',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.deadReckoning,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.black,
     borderWidth: 2,
-    borderColor: colors.surface,
+    borderColor: colors.brandCream,
   },
   emptyText: {
     ...textStyles.caption,

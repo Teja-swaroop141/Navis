@@ -159,15 +159,15 @@ export function SimulationScreen({ navigation }: Props) {
         {/* Legend Overlay */}
         <View style={styles.legendOverlay}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendBar, { backgroundColor: '#4F46E5' }]} />
+            <View style={[styles.legendBar, { backgroundColor: colors.simGNSS }]} />
             <Text style={styles.legendText}>GNSS</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendBar, styles.legendBarDashed, { backgroundColor: '#F59E0B' }]} />
+            <View style={[styles.legendBar, styles.legendBarDashed, { backgroundColor: colors.simDR }]} />
             <Text style={styles.legendText}>Dead Reckoning</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendBar, { backgroundColor: '#10B981' }]} />
+            <View style={[styles.legendBar, { backgroundColor: colors.simFused }]} />
             <Text style={styles.legendText}>Fused</Text>
           </View>
         </View>
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#F59E0B',
+    backgroundColor: colors.brandCream,
   },
   toastText: {
     fontSize: 10,

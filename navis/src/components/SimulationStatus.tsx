@@ -179,8 +179,8 @@ export function SimulationStatus({ frame, isPresentationMode }: SimulationStatus
 
   // ─── 4. NORMAL RUNNING STATE (GNSS_ACTIVE, FUSED, or STARTING) ────────────
   const isFusedMode = state === 'FUSED' || state === 'COMPLETED';
-  const badgeColor = isFusedMode ? '#10B981' : colors.primary;
-  const badgeSurface = isFusedMode ? '#ECFDF5' : colors.primarySurface;
+  const badgeColor = isFusedMode ? colors.black : colors.primary;
+  const badgeSurface = isFusedMode ? colors.brandCream : colors.primarySurface;
 
   return (
     <View style={styles.normalContainer}>
@@ -256,13 +256,13 @@ const styles = StyleSheet.create({
   gnssAvailableBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.brandCream,
     paddingHorizontal: spacing[3],
     paddingVertical: 5,
     borderRadius: radius.full,
     gap: 6,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: colors.brandCreamDark,
   },
   greenDot: {
     width: 7,
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   gnssAvailableText: {
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.bold,
-    color: '#059669',
+    color: colors.black,
     letterSpacing: 0.4,
   },
   routeRow: {
@@ -303,8 +303,8 @@ const styles = StyleSheet.create({
   routeStepTunnel: {
     fontSize: 11,
     fontWeight: fontWeights.bold,
-    color: colors.warning,
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    color: colors.black,
+    backgroundColor: colors.brandCream,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -316,12 +316,12 @@ const styles = StyleSheet.create({
 
   // Dead Reckoning Panel
   drContainer: {
-    backgroundColor: '#FAF5FF', // Soft lavender / purple tint
+    backgroundColor: colors.black,
     borderRadius: radius.xl,
     padding: spacing[4],
     gap: spacing[3],
     borderWidth: 1.5,
-    borderColor: '#DDD6FE',
+    borderColor: colors.brandCream,
     ...shadows.md,
   },
   drHeaderRow: {
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   drTitleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#8B5CF6', // Resilient purple
+    backgroundColor: colors.brandCream,
     paddingHorizontal: spacing[3],
     paddingVertical: 5,
     borderRadius: radius.full,
@@ -343,16 +343,16 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.black,
   },
   drTitleText: {
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.extrabold,
-    color: colors.surface,
+    color: colors.black,
     letterSpacing: 0.8,
   },
   sourcePill: {
-    backgroundColor: '#EDE9FE',
+    backgroundColor: colors.brandCream,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: radius.md,
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   sourcePillText: {
     fontSize: 9,
     fontWeight: fontWeights.bold,
-    color: '#6D28D9',
+    color: colors.black,
     letterSpacing: 0.5,
   },
   sensorsRow: {
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: colors.borderLight,
   },
   sensorItem: {
     flex: 1,
@@ -402,17 +402,17 @@ const styles = StyleSheet.create({
   sensorDivider: {
     width: 1,
     height: 22,
-    backgroundColor: '#F3E8FF',
+    backgroundColor: colors.borderLight,
   },
 
   // Recovery Panel
   recoveryContainer: {
-    backgroundColor: '#F5F3FF',
+    backgroundColor: colors.brandCream,
     borderRadius: radius.xl,
     padding: spacing[4],
     gap: spacing[3],
     borderWidth: 1.5,
-    borderColor: '#C4B5FD',
+    borderColor: colors.brandCreamDark,
     ...shadows.md,
   },
   recoveryHeader: {
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
   recoveryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#7C3AED',
+    backgroundColor: colors.black,
     paddingHorizontal: spacing[3],
     paddingVertical: 5,
     borderRadius: radius.full,
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: '#A7F3D0',
+    backgroundColor: colors.brandCream,
   },
   recoveryBadgeText: {
     fontSize: fontSizes.xs,
@@ -444,17 +444,17 @@ const styles = StyleSheet.create({
   recoverySub: {
     fontSize: 10,
     fontWeight: fontWeights.semibold,
-    color: '#6D28D9',
+    color: colors.black,
   },
   fusionEquationWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.white,
     borderRadius: radius.lg,
     padding: spacing[2],
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: colors.borderLight,
   },
   fusionBlock: {
     alignItems: 'center',
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   fusionBlockActive: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.brandCream,
     paddingVertical: 3,
     paddingHorizontal: 6,
     borderRadius: 6,
@@ -484,12 +484,12 @@ const styles = StyleSheet.create({
   fusionBlockTitleActive: {
     fontSize: 10,
     fontWeight: fontWeights.extrabold,
-    color: '#059669',
+    color: colors.black,
   },
   fusionBlockSubActive: {
     fontSize: 8,
     fontWeight: fontWeights.bold,
-    color: '#10B981',
+    color: colors.black,
   },
   liveMetricsStrip: {
     flexDirection: 'row',
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
   gnssActivePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.brandCream,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: radius.full,
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
   gnssActivePillText: {
     fontSize: 10,
     fontWeight: fontWeights.bold,
-    color: '#059669',
+    color: colors.black,
   },
 
   // Shared Metrics Grid

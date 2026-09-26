@@ -93,7 +93,7 @@ export function SimulationControls({
                 onPress={onResume}
                 activeOpacity={0.85}
               >
-                <Feather name="play" size={10} color={colors.success} />
+                <Feather name="play" size={10} color={colors.white} />
                 <Text style={styles.resumeText}>RESUME</Text>
               </TouchableOpacity>
             ) : (
@@ -102,7 +102,7 @@ export function SimulationControls({
                 onPress={onPause}
                 activeOpacity={0.85}
               >
-                <Feather name="pause" size={11} color={colors.warning} />
+                <Feather name="pause" size={11} color={colors.black} />
                 <Text style={styles.pauseText}>PAUSE</Text>
               </TouchableOpacity>
             )
@@ -147,7 +147,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.brandCream,
+    borderWidth: 1.5,
+    borderColor: colors.brandCreamDark,
     borderRadius: radius.xl,
     paddingVertical: spacing[4],
     paddingHorizontal: spacing[6],
@@ -155,14 +157,14 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   startIcon: {
-    color: colors.surface,
+    color: colors.black,
     fontSize: 14,
     marginRight: 2,
   },
   startText: {
     ...textStyles.labelLarge,
-    color: colors.surface,
-    fontWeight: fontWeights.bold,
+    color: colors.black,
+    fontWeight: fontWeights.extrabold,
     letterSpacing: 1,
   },
   controlsRow: {
@@ -214,33 +216,33 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   pauseBtn: {
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    backgroundColor: colors.brandCream,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderColor: colors.brandCreamDark,
   },
   pauseIcon: {
     fontSize: 11,
-    color: colors.warning,
+    color: colors.black,
   },
   pauseText: {
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.bold,
-    color: colors.warning,
+    color: colors.black,
     letterSpacing: 0.5,
   },
   resumeBtn: {
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    backgroundColor: colors.black,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderColor: colors.black,
   },
   resumeIcon: {
     fontSize: 10,
-    color: colors.success,
+    color: colors.white,
   },
   resumeText: {
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.bold,
-    color: colors.success,
+    color: colors.white,
     letterSpacing: 0.5,
   },
   restartBtn: {
@@ -265,29 +267,29 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 10,
     borderRadius: radius.lg,
-    backgroundColor: colors.lavender,
+    backgroundColor: colors.white,
     gap: 4,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
   presentBtnActive: {
-    backgroundColor: colors.primarySurface,
-    borderColor: colors.primaryLight,
+    backgroundColor: colors.brandCream,
+    borderColor: colors.brandCreamDark,
   },
   presentIcon: {
     fontSize: 12,
-    color: colors.primary,
+    color: colors.black,
   },
   presentIconActive: {
-    color: colors.primaryDark,
+    color: colors.black,
   },
   presentText: {
     fontSize: 10,
     fontWeight: fontWeights.bold,
-    color: colors.primary,
+    color: colors.black,
     letterSpacing: 0.3,
   },
   presentTextActive: {
-    color: colors.primaryDark,
+    color: colors.black,
   },
 });
