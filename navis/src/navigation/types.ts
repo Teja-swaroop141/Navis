@@ -10,6 +10,7 @@ export type RootStackParamList = {
   Simulation: undefined;
   Scenarios: undefined;
   SensorFailureScenario: undefined;
+  UrbanCanyon: undefined;
 };
 
 export type BottomTabParamList = {

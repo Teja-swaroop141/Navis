@@ -25,6 +25,7 @@ import { ScenarioCard } from '../components/ScenarioCard';
 import { Feather } from '@expo/vector-icons';
 import {
   SENSOR_FAILURE_SCENARIO,
+  URBAN_CANYON_SCENARIO,
   ScenarioDefinition,
 } from '../data/scenarioRoutes';
 
@@ -46,6 +47,8 @@ export function ScenariosScreen({ navigation }: Props) {
   const handleRunScenario = (scenario: ScenarioDefinition) => {
     if (scenario.id === 'sensor-failure-dr') {
       navigation.navigate('SensorFailureScenario');
+    } else if (scenario.id === 'urban-canyon') {
+      navigation.navigate('UrbanCanyon');
     }
   };
 
@@ -102,13 +105,19 @@ export function ScenariosScreen({ navigation }: Props) {
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>ACTIVE SCENARIOS</Text>
-            <Text style={styles.sectionCount}>1 READY</Text>
+            <Text style={styles.sectionCount}>2 READY</Text>
           </View>
 
           {/* First Scenario: SENSOR FAILURE */}
           <ScenarioCard
             scenario={SENSOR_FAILURE_SCENARIO}
             onRun={() => handleRunScenario(SENSOR_FAILURE_SCENARIO)}
+          />
+
+          {/* Second Scenario: URBAN CANYON */}
+          <ScenarioCard
+            scenario={URBAN_CANYON_SCENARIO}
+            onRun={() => handleRunScenario(URBAN_CANYON_SCENARIO)}
           />
         </Animated.View>
 

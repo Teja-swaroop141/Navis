@@ -11,6 +11,7 @@ import { PerformanceScreen } from '../screens/PerformanceScreen';
 import { SimulationScreen } from '../screens/SimulationScreen';
 import { ScenariosScreen } from '../screens/ScenariosScreen';
 import { SensorFailureScenarioScreen } from '../screens/SensorFailureScenarioScreen';
+import { UrbanCanyonScreen } from '../screens/UrbanCanyonScreen';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from './types';
 
@@ -36,6 +37,7 @@ export function AppNavigator() {
       <Stack.Screen name="Simulation" component={SimulationScreen} />
       <Stack.Screen name="Scenarios" component={ScenariosScreen} />
       <Stack.Screen name="SensorFailureScenario" component={SensorFailureScenarioScreen} />
+      <Stack.Screen name="UrbanCanyon" component={UrbanCanyonScreen} />
     </Stack.Navigator>
   );
 }

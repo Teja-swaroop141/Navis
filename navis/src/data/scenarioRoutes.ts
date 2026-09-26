@@ -48,17 +48,19 @@ export const SENSOR_FAILURE_SCENARIO: ScenarioDefinition = {
   tags: ['Dead Reckoning', 'Adaptive Fusion', 'Degraded State', 'Sensor Recovery'],
 };
 
+export const URBAN_CANYON_SCENARIO: ScenarioDefinition = {
+  id: 'urban-canyon',
+  title: 'URBAN CANYON',
+  subtitle: 'Experience GNSS multipath degradation through a dense high-rise city corridor.',
+  description:
+    'Simulates navigating a vehicle through a dense urban canyon where tall building structures cause multipath reflections and GNSS signal attenuation. NAVIS uses inertial dead reckoning to maintain a smooth position estimate throughout.',
+  status: 'READY',
+  category: 'GNSS Outage',
+  route: SIMULATION_ROUTE,
+  tags: ['Urban Canyon', 'Multipath', 'GNSS Degradation', 'IMU Fusion', '3D Driving'],
+};
+
 export const FUTURE_SCENARIOS: ScenarioDefinition[] = [
-  {
-    id: 'gnss-failure',
-    title: 'GNSS FAILURE',
-    subtitle: 'Simulate urban canyons, multi-path reflections, and complete GNSS blackout.',
-    description: 'Explore navigation handling when GNSS satellite reception is completely blocked by high-rise city infrastructure.',
-    status: 'COMING_SOON',
-    category: 'GNSS Outage',
-    route: SIMULATION_ROUTE,
-    tags: ['Urban Canyon', 'Multipath', 'Blackout'],
-  },
   {
     id: 'multi-sensor-failure',
     title: 'MULTI-SENSOR FAILURE',
